@@ -10,13 +10,11 @@ public class XRHandVisuals : MonoBehaviour
     [Header("Statics")]
     [SerializeField] private XRController controller;
     [SerializeField] private XRPhysicsHand physicsHand;
-
-    [HideInInspector] public bool trackPhysicsHand;
+    
     private Animator anim;
 
     void Start()
     {
-        trackPhysicsHand = true;
         anim = handModel.GetComponent<Animator>();
     }
 
@@ -27,12 +25,6 @@ public class XRHandVisuals : MonoBehaviour
         {
             anim.SetFloat("Grip", controller.gripValue);
             anim.SetFloat("Trigger", controller.triggerValue);
-        }
-        // ## POSITIONING ##
-        if (trackPhysicsHand)
-        {
-            transform.position = physicsHand.transform.position;
-            transform.rotation = physicsHand.transform.rotation;
         }
     }
 

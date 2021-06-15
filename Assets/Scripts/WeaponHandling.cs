@@ -81,10 +81,8 @@ public class WeaponHandling : MonoBehaviour
             && gripState != GripStates.EMPTY)
         {
             gripState = GripStates.EMPTY;
-            leftHand.handVisuals.trackPhysicsHand = true;
-            rightHand.handVisuals.trackPhysicsHand = true;
-            leftHand.handVisuals.transform.SetParent(cameraOffset);
-            rightHand.handVisuals.transform.SetParent(cameraOffset);
+            rightHand.enablePhysics = true;
+            leftHand.enablePhysics = true;
         }
     }
 
@@ -134,22 +132,23 @@ public class WeaponHandling : MonoBehaviour
         }
 
         // Instantaneously set rotation & position same as hand's
+        // (no rotation with weightings yet)
+        lastSingleGrippingHand.transform.position = (lastSingleGrippingHand == rightHand) ? rightController.transform.position : leftController.transform.position;
         weapon.transform.localPosition = -weapon.attachTransform1.localPosition;
-        weapon.transform.localRotation = weapon.attachTransform1.localRotation;
+
+        lastSingleGrippingHand.transform.rotation = (lastSingleGrippingHand == rightHand) ? rightController.transform.rotation : leftController.transform.rotation;
+        //weapon.transform.localRotation = rightController.transform.rotation;
     }
 
     private void SetupOneHandedMovement(XRPhysicsHand grippingHand)
     {
         lastSingleGrippingHand = grippingHand;
+        lastSingleGrippingHand.enablePhysics = false;
         lastSingleFreeHand = (grippingHand == rightHand) ? leftHand : rightHand;
+        lastSingleFreeHand.enablePhysics = true;
         weapon.transform.SetParent(grippingHand.attachTransform);
         ResetHandLocals();
         weapon.ResetWeaponLocals();
-        lastSingleGrippingHand.handVisuals.trackPhysicsHand = false;
-        lastSingleFreeHand.handVisuals.trackPhysicsHand = true;
-        lastSingleGrippingHand.handVisuals.transform.position = (lastSingleGrippingHand == rightHand) ? rightHand.transform.position : leftHand.transform.position;
-        lastSingleGrippingHand.handVisuals.transform.SetParent((lastSingleGrippingHand == rightHand) ? weapon.attachTransform1 : weapon.attachTransform2);
-        lastSingleFreeHand.handVisuals.transform.SetParent(cameraOffset);
     }
 
 
@@ -177,15 +176,11 @@ public class WeaponHandling : MonoBehaviour
         lastSingleGrippingHand.attachTransform.rotation = newRot;
 
         // ## Postion ##
-        // Setup attach positions after rotation has been applied
+        // Setup debug attach positions after rotation has been applied
         if (mustSetupGrips)
         {
             weapon.attachTransform1.position = rightHand.attachTransform.position;
             weapon.attachTransform2.position = leftHand.attachTransform.position;
-            rightHand.handVisuals.trackPhysicsHand = false;
-            leftHand.handVisuals.trackPhysicsHand = false;
-            rightHand.handVisuals.transform.SetParent(weapon.attachTransform1);
-            leftHand.handVisuals.transform.SetParent(weapon.attachTransform2);
             mustSetupGrips = false;
         }
 
@@ -205,6 +200,8 @@ public class WeaponHandling : MonoBehaviour
         weapon.ResetWeaponLocals();
         weapon.transform.localPosition = -weapon.attachTransform1.localPosition;
         weapon.transform.localRotation = weapon.attachTransform1.localRotation;
+        rightHand.enablePhysics = false;
+        leftHand.enablePhysics = false;
     }
 
 
