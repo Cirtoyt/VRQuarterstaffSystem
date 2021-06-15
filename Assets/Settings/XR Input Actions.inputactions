@@ -68,7 +68,7 @@
                     "interactions": ""
                 },
                 {
-                    "name": "Grab",
+                    "name": "Grip",
                     "type": "Value",
                     "id": "20b9c2fc-38e0-43ea-9e40-3406f079f8a2",
                     "expectedControlType": "Axis",
@@ -84,7 +84,7 @@
                     "interactions": ""
                 },
                 {
-                    "name": "Move",
+                    "name": "Thumbstick",
                     "type": "Value",
                     "id": "9693e25f-8a4f-4aed-842f-3961243c69a1",
                     "expectedControlType": "Vector2",
@@ -146,7 +146,7 @@
                     "interactions": "",
                     "processors": "StickDeadzone,NormalizeVector2",
                     "groups": "Generic XR Controller",
-                    "action": "Move",
+                    "action": "Thumbstick",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -190,7 +190,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Generic XR Controller",
-                    "action": "Grab",
+                    "action": "Grip",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -228,7 +228,7 @@
                     "interactions": ""
                 },
                 {
-                    "name": "Grab",
+                    "name": "Grip",
                     "type": "Value",
                     "id": "6a06dcd0-b1ed-4494-a3ed-929e0d66aec8",
                     "expectedControlType": "Axis",
@@ -301,17 +301,6 @@
                 },
                 {
                     "name": "",
-                    "id": "2fc48ed7-81a8-4388-be6b-61de4b3cc929",
-                    "path": "<XRController>{RightHand}/triggerPressed",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Generic XR Controller",
-                    "action": "Trigger",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "5e36447c-c47a-483e-bfbc-917f37931211",
                     "path": "<XRController>{RightHand}/primary2DAxis",
                     "interactions": "",
@@ -361,7 +350,18 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Generic XR Controller",
-                    "action": "Grab",
+                    "action": "Grip",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "15dbbc09-adb1-4243-a909-f54cec50da58",
+                    "path": "<XRController>{RightHand}/trigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Trigger",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

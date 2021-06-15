@@ -6,96 +6,101 @@ using UnityEngine.Events;
 
 public class XRController : MonoBehaviour
 {
+    [Header("General Variables")]
+    public Transform attachTransform;
+    [Header("Action Variables")]
+    [Range(0, 1)] [SerializeField] private float gripBeginThreshold = 0.7f;
+    [Range(0, 1)] [SerializeField] private float triggerBeginThreshold = 0.7f;
+    [Range(0, 1)] [SerializeField] private float thumbstickBeginThreshold = 0.3f;
+    [Header("Action Debugging")]
+    public bool isGripActivated;
+    [Range(0, 1)] public float gripValue = 0;
+    public bool isTriggerActivated;
+    [Range(0, 1)] public float triggerValue = 0;
+    public Vector2 thumbstickValue;
+    [Header("Events")]
+    public UnityEvent gripBeginEvent;
+    public UnityEvent gripEndEvent;
+    public UnityEvent triggerBeginEvent;
+    public UnityEvent triggerEndEvent;
     [Header("Actions")]
     [SerializeField] private InputActionProperty positionAction;
     [SerializeField] private InputActionProperty rotationAction;
-    [SerializeField] private InputActionProperty grabAction;
+    [SerializeField] private InputActionProperty gripAction;
     [SerializeField] private InputActionProperty triggerAction;
-    [Header("Variables")]
-    public GameObject attachTransform;
-    [Range(0, 1)] [SerializeField] private float grabUpperClamp = 0.7f;
-    //[Range(0, 1)] [SerializeField] private float grabLowerClamp = 0.125f;
-    [Range(0, 1)] [SerializeField] private float triggerUpperClamp = 0.7f;
-    //[Range(0, 1)] [SerializeField] private float triggerLowerClamp = 0.125f;
-    [Header("Events")]
-    public UnityEvent grabBeginEvent;
-    public UnityEvent grabEndEvent;
-    public UnityEvent triggerBeginEvent;
-    public UnityEvent triggerEndEvent;
+    [SerializeField] private InputActionProperty thumbstickAction;
 
     private List<InputActionProperty> actionList = new List<InputActionProperty>();
-    private bool isGrabActivated = false;
-    private bool isTriggerActivated = false;
 
-    void Start()
+    void Awake()
     {
         actionList.Add(positionAction);
         actionList.Add(rotationAction);
-        actionList.Add(grabAction);
+        actionList.Add(gripAction);
         actionList.Add(triggerAction);
-
-        EnableActions();
+        actionList.Add(thumbstickAction);
 
         positionAction.action.performed += OnPosition;
         rotationAction.action.performed += OnRotation;
-        grabAction.action.performed += OnGrip;
+        gripAction.action.performed += OnGrip;
         triggerAction.action.performed += OnTrigger;
+        thumbstickAction.action.performed += OnThumbstick;
     }
 
     private void OnPosition(InputAction.CallbackContext obj)
     {
-        transform.position = obj.ReadValue<Vector3>();
+        transform.localPosition = obj.ReadValue<Vector3>();
     }
 
     private void OnRotation(InputAction.CallbackContext obj)
     {
-        transform.rotation = obj.ReadValue<Quaternion>();
+        transform.localRotation = obj.ReadValue<Quaternion>();
     }
 
     private void OnGrip(InputAction.CallbackContext obj)
     {
-        var gripValue = obj.ReadValue<float>();
+        gripValue = obj.ReadValue<float>();
         
-        if (gripValue >= grabUpperClamp && !isGrabActivated)
+        if (gripValue >= gripBeginThreshold && !isGripActivated)
         {
-            isGrabActivated = true;
-            Debug.Log(gameObject.name + " Grip detected");
-            grabBeginEvent.Invoke();
+            isGripActivated = true;
+            gripBeginEvent.Invoke();
         }
-        else if (gripValue < grabUpperClamp && isGrabActivated)
+        else if (gripValue < gripBeginThreshold && isGripActivated)
         {
-            isGrabActivated = false;
-            Debug.Log(gameObject.name + " Grip let go");
-            grabEndEvent.Invoke();
+            isGripActivated = false;
+            gripEndEvent.Invoke();
         }
     }
 
     private void OnTrigger(InputAction.CallbackContext obj)
     {
-        var triggerValue = obj.ReadValue<float>();
+        triggerValue = obj.ReadValue<float>();
 
-        if (triggerValue >= triggerUpperClamp && !isTriggerActivated)
+        if (triggerValue >= triggerBeginThreshold && !isTriggerActivated)
         {
             isTriggerActivated = true;
-            Debug.Log(gameObject.name + " Trigger detected");
             triggerBeginEvent.Invoke();
         }
-        else if (triggerValue < triggerUpperClamp && isTriggerActivated)
+        else if (triggerValue < triggerBeginThreshold && isTriggerActivated)
         {
             isTriggerActivated = false;
-            Debug.Log(gameObject.name + " Trigger let go");
             triggerEndEvent.Invoke();
         }
     }
 
-    void Update()
+    private void OnThumbstick(InputAction.CallbackContext obj)
     {
-        
-    }
+        var rawValue = obj.ReadValue<Vector2>();
 
-    private void EnableActions()
-    {
-        OnEnable();
+        if (rawValue.magnitude >= thumbstickBeginThreshold)
+        {
+            thumbstickValue = rawValue;
+        }
+        else
+        {
+            thumbstickValue = Vector2.zero;
+        }
     }
 
     private void OnEnable()

@@ -1,27 +1,28 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class HandPresence : MonoBehaviour
 {
-    [SerializeField] private GameObject handModel;
     [Header("Variables")]
+    [SerializeField] private GameObject handModel;
     [SerializeField] private bool hideHandWhilstGrabbing;
 
     private Animator anim;
+    private XRController controller;
 
     void Start()
     {
         anim = handModel.GetComponent<Animator>();
+        controller = GetComponent<XRController>();
     }
 
     void Update()
     {
         if (handModel)
         {
-            //anim.SetFloat("Grip", gripPullAction.action.ReadValue<float>());
-            //anim.SetFloat("Trigger", triggerPullAction.action.ReadValue<float>());
+            anim.SetFloat("Grip", controller.gripValue);
+            anim.SetFloat("Trigger", controller.triggerValue);
         }
     }
 
