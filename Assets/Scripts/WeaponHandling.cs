@@ -131,6 +131,18 @@ public class WeaponHandling : MonoBehaviour
     }
 
 
+    private void SetupOneHandedMovement(XRPhysicsHand grippingHand)
+    {
+        lastSingleGrippingHand = grippingHand;
+        lastSingleGrippingHand.enablePhysics = false;
+        lastSingleFreeHand = (grippingHand == rightHand) ? leftHand : rightHand;
+        lastSingleFreeHand.enablePhysics = true;
+        weapon.transform.SetParent(grippingHand.attachTransform);
+        ResetHandLocals();
+        weapon.transform.localPosition = lastSingleGrippingHand == rightHand ? -weapon.rightAttachTransform.localPosition : -weapon.leftAttachTransform.localPosition;
+        weapon.transform.localRotation = Quaternion.identity; // Maybe this should be set based on previous upper/lower grip forward facing direction
+    }
+
     private void ProcessOneHandedMovement(XRPhysicsHand grippingHand)
     {
         if (mustSetupGrips)
@@ -147,19 +159,18 @@ public class WeaponHandling : MonoBehaviour
         //weapon.transform.localRotation = rightController.transform.rotation;
     }
 
-    private void SetupOneHandedMovement(XRPhysicsHand grippingHand)
-    {
-        lastSingleGrippingHand = grippingHand;
-        lastSingleGrippingHand.enablePhysics = false;
-        lastSingleFreeHand = (grippingHand == rightHand) ? leftHand : rightHand;
-        lastSingleFreeHand.enablePhysics = true;
-        weapon.transform.SetParent(grippingHand.attachTransform);
-        ResetHandLocals();
-        weapon.ResetWeaponLocals();
-        weapon.transform.localPosition = -weapon.rightAttachTransform.localPosition;
-        weapon.transform.localRotation = Quaternion.identity;
-    }
 
+    private void SetupTwoHandedMovement()
+    {
+        weapon.transform.SetParent(lastSingleGrippingHand.attachTransform);
+        ResetHandLocals();
+        //weapon.ResetWeaponLocals();
+        weapon.transform.localPosition = (lastSingleGrippingHand == rightHand) ? -weapon.rightAttachTransform.localPosition : -weapon.leftAttachTransform.localPosition;
+        weapon.transform.localRotation = (lastSingleGrippingHand == rightHand) ? weapon.rightAttachTransform.localRotation : weapon.leftAttachTransform.localRotation;
+        // Not this^ for rotation, yet similar but with different direction sources
+        rightHand.enablePhysics = false;
+        leftHand.enablePhysics = false;
+    }
 
     private void ProcessTwoHandedMovement()
     {
@@ -231,17 +242,6 @@ public class WeaponHandling : MonoBehaviour
         }
 
         weapon.transform.localPosition = newPos;
-    }
-
-    private void SetupTwoHandedMovement()
-    {
-        weapon.transform.SetParent(lastSingleGrippingHand.attachTransform);
-        ResetHandLocals();
-        weapon.ResetWeaponLocals();
-        weapon.transform.localPosition = -weapon.rightAttachTransform.localPosition;
-        weapon.transform.localRotation = weapon.rightAttachTransform.localRotation;
-        rightHand.enablePhysics = false;
-        leftHand.enablePhysics = false;
     }
 
 
