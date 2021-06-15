@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
-    public Transform attachTransform1;
-    public Transform attachTransform2;
+    public Transform rightAttachTransform;
+    public Transform leftAttachTransform;
     public Collider[] physicsColliders;
 
     private bool isPresent = false;
@@ -14,17 +14,17 @@ public class Weapon : MonoBehaviour
     private bool isMaterialising = false;
     private bool isDematerialising = false;
 
-    private Vector3 originAttachTrans1LocPos;
-    private Quaternion originAttachTrans1LocRot;
-    private Vector3 originAttachTrans2LocPos;
-    private Quaternion originAttachTrans2LocRot;
+    private Vector3 originRightAttachTransLocPos;
+    private Quaternion originRightAttachTransLocRot;
+    private Vector3 originLeftAttachTransLocPos;
+    private Quaternion originLeftAttachTransLocRot;
 
     private void Start()
     {
-        originAttachTrans1LocPos = attachTransform1.localPosition;
-        originAttachTrans1LocRot = attachTransform1.localRotation;
-        originAttachTrans2LocPos = attachTransform2.localPosition;
-        originAttachTrans2LocRot = attachTransform2.localRotation;
+        originRightAttachTransLocPos = rightAttachTransform.localPosition;
+        originRightAttachTransLocRot = rightAttachTransform.localRotation;
+        originLeftAttachTransLocPos = leftAttachTransform.localPosition;
+        originLeftAttachTransLocRot = leftAttachTransform.localRotation;
 
         gameObject.SetActive(false);
     }
@@ -120,9 +120,9 @@ public class Weapon : MonoBehaviour
 
     public void ResetWeaponLocals()
     {
-        attachTransform1.localPosition = originAttachTrans1LocPos;
-        attachTransform1.localRotation = originAttachTrans1LocRot;
-        attachTransform2.localPosition = originAttachTrans2LocPos;
-        attachTransform2.localRotation = originAttachTrans2LocRot;
+        rightAttachTransform.localPosition = originRightAttachTransLocPos;
+        rightAttachTransform.localRotation = originRightAttachTransLocRot;
+        leftAttachTransform.localPosition = originLeftAttachTransLocPos;
+        leftAttachTransform.localRotation = originLeftAttachTransLocRot;
     }
 }
