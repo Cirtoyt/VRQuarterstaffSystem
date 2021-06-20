@@ -12,8 +12,12 @@ public class XRPhysicsHand : MonoBehaviour
 
     [HideInInspector] public bool enablePhysics;
 
+    private Rigidbody rb;
+
     private void Start()
     {
+        rb = GetComponent<Rigidbody>();
+
         enablePhysics = true;
     }
 
@@ -23,6 +27,9 @@ public class XRPhysicsHand : MonoBehaviour
         {
             // Turn hand collider on? Should collider be off when disabled inputs?
             // Have hand react to surroundings (colliders)
+
+            //rb.MovePosition(parentController.transform.position);
+            //rb.MoveRotation(parentController.transform.rotation);
 
             // Currently do not have hand physics and instant snap physics hand to controller position & rotation:
             transform.position = parentController.transform.position;

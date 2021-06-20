@@ -6,8 +6,6 @@ using UnityEngine.Events;
 
 public class XRController : MonoBehaviour
 {
-    [Header("Statics")]
-    public Transform attachTransform;
     [Header("Variables")]
     [Range(0, 1)] [SerializeField] private float gripBeginThreshold = 0.7f;
     [Range(0, 1)] [SerializeField] private float triggerBeginThreshold = 0.7f;
