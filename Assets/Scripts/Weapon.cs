@@ -6,6 +6,7 @@ public class Weapon : MonoBehaviour
 {
     public Transform rightAttachTransform;
     public Transform leftAttachTransform;
+    public Transform spawnAttachTransform;
     public Collider[] physicsColliders;
 
     private bool isPresent = false;
@@ -120,6 +121,7 @@ public class Weapon : MonoBehaviour
 
     public void ResetWeaponLocals()
     {
+        //transform.localPosition = Vector3.zero;
         rightAttachTransform.localPosition = originRightAttachTransLocPos;
         rightAttachTransform.localRotation = originRightAttachTransLocRot;
         leftAttachTransform.localPosition = originLeftAttachTransLocPos;
