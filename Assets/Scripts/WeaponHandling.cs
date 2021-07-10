@@ -15,13 +15,16 @@ public class WeaponHandling : MonoBehaviour
     public HandTypes dominantHandType;
     [Header("Trying to find the right values")]
     [SerializeField] private float positionSpeed;
+    [Range(0.01f, 1)][SerializeField] private float positionSpeedDamper;
     [SerializeField] private float rotationSpeed;
+    [Range(0.01f, 1)] [SerializeField] private float rotationSpeedDamper;
     [SerializeField] private float maxAngularVelocity;
     [Header("Statics")]
     [SerializeField] private XRController leftController;
     [SerializeField] private XRPhysicsHand leftHand;
     [SerializeField] private XRController rightController;
     [SerializeField] private XRPhysicsHand rightHand;
+    [SerializeField] private Transform weaponPivotPoint;
 
     private enum GripStates
     {
@@ -136,7 +139,7 @@ public class WeaponHandling : MonoBehaviour
         rb.isKinematic = false;
 
         lastSingleGrippingHand = grippingHand;
-        lastSingleGrippingHand.enablePhysics = false;
+        lastSingleGrippingHand.enablePhysics = true;
         lastSingleFreeHand = (grippingHand == rightHand) ? leftHand : rightHand;
         lastSingleFreeHand.enablePhysics = true;
 
@@ -195,23 +198,28 @@ public class WeaponHandling : MonoBehaviour
         }
 
         // ## Hands ##
+        //weaponPivotPoint.transform.position = grippingHand.grabPointTransform.position;
+        //weaponPivotPoint.transform.rotation = grippingHand.grabPointTransform.rotation;
         // Hand instantaneously tracks controller without any physics
-        grippingHand.transform.position = grippingHand.parentController.transform.position;
-        grippingHand.transform.rotation = grippingHand.parentController.transform.rotation;
+        //grippingHand.transform.position = grippingHand.parentController.transform.position;
+        //grippingHand.transform.rotation = grippingHand.parentController.transform.rotation;
 
         // ## Weapon ##
         // Position
-        weaponTargetPos = rightHand.grabPointTransform.position;
-        rb.velocity = (weaponTargetPos - weapon.rightAttachTransform.position) * positionSpeed * Time.deltaTime;
+        //weaponTargetPos = rightHand.grabPointTransform.position;
+        //rb.velocity = (weaponTargetPos - weapon.rightAttachTransform.position) * positionSpeed * positionSpeedDamper * Time.deltaTime;
 
-        // Rotation
-        weaponTargetRot = grippingHand.grabPointTransform.rotation; //Quaternion.LookRotation(grippingHand.grabPointTransform.forward, grippingHand.grabPointTransform.up);
+        //// Rotation
+        ////if (!weapon.GetIsColliding())
+        //{
+        //    weaponTargetRot = grippingHand.grabPointTransform.rotation;
 
-        Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
-        rotDifference.ToAngleAxis(out float angleInDegrees, out Vector3 rotationAxis);
+        //    Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
+        //    rotDifference.ToAngleAxis(out float angleInDegrees, out Vector3 rotationAxis);
 
-        rb.maxAngularVelocity = maxAngularVelocity;
-        rb.angularVelocity = rotationAxis * angleInDegrees * Mathf.Deg2Rad * rotationSpeed * Time.deltaTime;
+        //    rb.maxAngularVelocity = maxAngularVelocity;
+        //    rb.angularVelocity = rotationAxis * angleInDegrees * Mathf.Deg2Rad * rotationSpeed * rotationSpeedDamper * Time.deltaTime;
+        //}
     }
 
 

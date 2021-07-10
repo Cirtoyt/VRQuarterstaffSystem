@@ -8,12 +8,14 @@ public class Weapon : MonoBehaviour
     public Transform leftAttachTransform;
     public Transform spawnAttachTransform;
     public Collider[] physicsColliders;
+    public MeshRenderer[] meshesRenderers;
 
     private bool isPresent = false;
     private bool isSolid = false;
     private bool lastIsSolid = false;
     private bool isMaterialising = false;
     private bool isDematerialising = false;
+    private bool isColliding = false;
 
     private Vector3 originRightAttachTransLocPos;
     private Quaternion originRightAttachTransLocRot;
@@ -26,8 +28,6 @@ public class Weapon : MonoBehaviour
         originRightAttachTransLocRot = rightAttachTransform.localRotation;
         originLeftAttachTransLocPos = leftAttachTransform.localPosition;
         originLeftAttachTransLocRot = leftAttachTransform.localRotation;
-
-        gameObject.SetActive(false);
     }
 
     void Update()
@@ -39,7 +39,7 @@ public class Weapon : MonoBehaviour
             if (true)
             {
                 isMaterialising = false;
-                isPresent = true;
+                isSolid = true;
             }
         }
 
@@ -48,8 +48,6 @@ public class Weapon : MonoBehaviour
             // Once done dematerialising
             if (true)
             {
-                gameObject.SetActive(false);
-                transform.SetParent(null);
                 ResetWeaponLocals();
                 isDematerialising = false;
                 isPresent = false;
@@ -69,6 +67,10 @@ public class Weapon : MonoBehaviour
                 {
                     collider.enabled = true;
                 }
+                foreach (MeshRenderer meshRenderer in meshesRenderers)
+                {
+                    meshRenderer.enabled = true;
+                }
             }
             else
             {
@@ -77,13 +79,16 @@ public class Weapon : MonoBehaviour
                 {
                     collider.enabled = false;
                 }
+                foreach (MeshRenderer meshRenderer in meshesRenderers)
+                {
+                    meshRenderer.enabled = false;
+                }
             }
         }
     }
 
     public void BeginMaterialising()
     {
-        gameObject.SetActive(true);
         isPresent = true;
         isMaterialising = true;
         isDematerialising = false;
@@ -126,5 +131,20 @@ public class Weapon : MonoBehaviour
         rightAttachTransform.localRotation = originRightAttachTransLocRot;
         leftAttachTransform.localPosition = originLeftAttachTransLocPos;
         leftAttachTransform.localRotation = originLeftAttachTransLocRot;
+    }
+
+    public bool GetIsColliding()
+    {
+        return isColliding;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        isColliding = true;
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        isColliding = false;
     }
 }
