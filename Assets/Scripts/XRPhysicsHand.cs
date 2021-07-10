@@ -32,18 +32,18 @@ public class XRPhysicsHand : MonoBehaviour
     {
         if (enablePhysics)
         {
-            transform.position = parentController.transform.position;
-            transform.rotation = parentController.transform.rotation;
+            //transform.position = parentController.transform.position;
+            //transform.rotation = parentController.transform.rotation;
 
-            //// Position
-            //rb.velocity = (parentController.transform.position - transform.position) * positionSpeed * Time.deltaTime;
+            // Position
+            rb.velocity = (parentController.transform.position - transform.position) * positionSpeed * Time.deltaTime;
 
-            //// Rotation
-            //Quaternion rotDifference = parentController.transform.rotation * Quaternion.Inverse(transform.rotation);
-            //rotDifference.ToAngleAxis(out float angleInDegrees, out Vector3 rotationAxis);
+            // Rotation
+            Quaternion rotDifference = parentController.transform.rotation * Quaternion.Inverse(transform.rotation);
+            rotDifference.ToAngleAxis(out float angleInDegrees, out Vector3 rotationAxis);
 
-            //rb.maxAngularVelocity = maxAngularVelocity;
-            //rb.angularVelocity = rotationAxis * angleInDegrees * Mathf.Deg2Rad * rotationSpeed * Time.deltaTime;
+            rb.maxAngularVelocity = maxAngularVelocity;
+            rb.angularVelocity = rotationAxis * angleInDegrees * Mathf.Deg2Rad * rotationSpeed * Time.deltaTime;
         }
     }
 }

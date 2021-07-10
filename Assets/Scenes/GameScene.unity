@@ -682,7 +682,6 @@ MonoBehaviour:
   leftHand: {fileID: 1882006857}
   rightController: {fileID: 456696796}
   rightHand: {fileID: 831131445}
-  weaponPivotPoint: {fileID: 824000932}
 --- !u!1 &515180942
 GameObject:
   m_ObjectHideFlags: 0
@@ -958,7 +957,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &824000932
 Transform:
   m_ObjectHideFlags: 0
