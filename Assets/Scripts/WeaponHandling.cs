@@ -194,7 +194,8 @@ public class WeaponHandling : MonoBehaviour
 
         // ## Weapon ##
         // Rotation
-        weaponTargetRot = grippingHand.grabPointTransform.rotation;
+        //weaponTargetRot = grippingHand.grabPointTransform.rotation;
+        weaponTargetRot = Quaternion.LookRotation(grippingHand.grabPointTransform.forward, firstGrippingHand.grabPointTransform.up);
 
         // Position
         if (grippingHand == rightHand)
@@ -279,33 +280,6 @@ public class WeaponHandling : MonoBehaviour
         rb.centerOfMass = weapon.transform.InverseTransformPoint(weaponGripMidPoint);
 
         ProcessWeaponPhysics(weaponGripMidPoint);
-
-        //float stretchDist = Vector3.Distance(rightHand.grabPointTransform.position, leftHand.grabPointTransform.position);
-        //float baseStretchDist = Vector3.Distance(weapon.rightAttachTransform.position, weapon.leftAttachTransform.position);
-        //float stretchCorrection = ((stretchDist - baseStretchDist) / 2);
-
-        //if (firstGrippingHand == rightHand)
-        //{
-        //    if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
-        //    {
-        //        weaponTargetPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.rightAttachTransform.localPosition.z + stretchCorrection);
-        //    }
-        //    else
-        //    {
-        //        weaponTargetPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.rightAttachTransform.localPosition.z - stretchCorrection);
-        //    }
-        //}
-        //else
-        //{
-        //    if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
-        //    {
-        //        weaponTargetPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.leftAttachTransform.localPosition.z + stretchCorrection);
-        //    }
-        //    else
-        //    {
-        //        weaponTargetPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.leftAttachTransform.localPosition.z - stretchCorrection);
-        //    }
-        //}
     }
 
     private void ProcessWeaponPhysics(Vector3 weaponTrackingPos)
@@ -316,6 +290,9 @@ public class WeaponHandling : MonoBehaviour
         // Rotation
         Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
         rotDifference.ToAngleAxis( out float angleInDegrees, out Vector3 rotationAxis);
+
+        if (angleInDegrees > 180)
+            angleInDegrees -= 360;
 
         rb.maxAngularVelocity = maxAngularVelocity;
         rb.angularVelocity = rotationAxis * angleInDegrees * Mathf.Deg2Rad * rotationSpeed * rotationSpeedDamper * Time.deltaTime;
