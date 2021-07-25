@@ -194,8 +194,7 @@ public class WeaponHandling : MonoBehaviour
 
         // ## Weapon ##
         // Rotation
-        //weaponTargetRot = grippingHand.grabPointTransform.rotation;
-        weaponTargetRot = Quaternion.LookRotation(grippingHand.grabPointTransform.forward, firstGrippingHand.grabPointTransform.up);
+        weaponTargetRot = grippingHand.grabPointTransform.rotation;
 
         // Position
         if (grippingHand == rightHand)
