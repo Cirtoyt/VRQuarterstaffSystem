@@ -457,7 +457,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 50719506}
-  - {fileID: 824000932}
   m_Father: {fileID: 1931397785}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -965,12 +964,12 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 824000931}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0.559193, y: -0, z: -0, w: 0.82903755}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 456696795}
-  m_RootOrder: 1
+  m_Father: {fileID: 1839532930}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!153 &824000933
 ConfigurableJoint:
@@ -997,7 +996,7 @@ ConfigurableJoint:
     spring: 0
     damper: 0
   m_LinearLimit:
-    limit: 0
+    limit: 1
     bounciness: 0
     contactDistance: 0.1
   m_AngularXLimitSpring:
@@ -1026,22 +1025,22 @@ ConfigurableJoint:
   m_TargetVelocity: {x: 0, y: 0, z: 0}
   m_XDrive:
     serializedVersion: 3
-    positionSpring: 10
+    positionSpring: 10000
     positionDamper: 1
     maximumForce: 3.4028233e+38
   m_YDrive:
     serializedVersion: 3
-    positionSpring: 10
+    positionSpring: 10000
     positionDamper: 1
     maximumForce: 3.4028233e+38
   m_ZDrive:
     serializedVersion: 3
-    positionSpring: 10
+    positionSpring: 10000
     positionDamper: 1
     maximumForce: 3.4028233e+38
   m_TargetRotation: {x: 0, y: 0, z: 0, w: 1}
   m_TargetAngularVelocity: {x: 0, y: 0, z: 0}
-  m_RotationDriveMode: 0
+  m_RotationDriveMode: 1
   m_AngularXDrive:
     serializedVersion: 3
     positionSpring: 0
@@ -1054,8 +1053,8 @@ ConfigurableJoint:
     maximumForce: 3.4028233e+38
   m_SlerpDrive:
     serializedVersion: 3
-    positionSpring: 20
-    positionDamper: 0.1
+    positionSpring: 2000
+    positionDamper: 10
     maximumForce: 3.4028233e+38
   m_ProjectionMode: 0
   m_ProjectionDistance: 0.1
@@ -1491,7 +1490,8 @@ Transform:
   m_LocalRotation: {x: -0.55919296, y: 0, z: 0, w: 0.8290375}
   m_LocalPosition: {x: 0.023, y: -0.023000002, z: -0.036}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 824000932}
   m_Father: {fileID: 831131443}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: -68, y: 0, z: 0}
@@ -3019,7 +3019,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7324149667657232023}
-  m_Material: {fileID: 13400000, guid: 985ee1c097b0fa34093a96200788db1a, type: 2}
+  m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.019
@@ -3066,7 +3066,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4811673620510615592}
-  m_Material: {fileID: 13400000, guid: 985ee1c097b0fa34093a96200788db1a, type: 2}
+  m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2

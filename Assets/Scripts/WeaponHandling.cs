@@ -35,16 +35,13 @@ public class WeaponHandling : MonoBehaviour
     private GripStates gripState;
     private bool mustSetupGrips;
     private Rigidbody rb;
-    private XRPhysicsHand lastSingleGrippingHand;
-    private XRPhysicsHand lastSingleFreeHand;
+    private XRPhysicsHand firstGrippingHand;
+    private XRPhysicsHand secondGrippingHand;
     private XRController dominantController;
     private XRPhysicsHand dominantHand;
-    private Vector3 originLeftHandAttachTransLocPos;
-    private Quaternion originLeftHandAttachTransLocRot;
-    private Vector3 originRightHandAttachTransLocPos;
-    private Quaternion originRightHandAttachTransLocRot;
     private Vector3 weaponTargetPos;
     private Quaternion weaponTargetRot;
+    private bool secondHandGrippingAboveFirst;
 
     private void Start()
     {
@@ -64,13 +61,8 @@ public class WeaponHandling : MonoBehaviour
                 break;
         }
 
-        lastSingleGrippingHand = dominantHand;
-        lastSingleFreeHand = (dominantHand == rightHand) ? leftHand : rightHand;
-
-        originLeftHandAttachTransLocPos = leftHand.grabPointTransform.localPosition;
-        originLeftHandAttachTransLocRot = leftHand.grabPointTransform.localRotation;
-        originRightHandAttachTransLocPos = rightHand.grabPointTransform.localPosition;
-        originRightHandAttachTransLocRot = rightHand.grabPointTransform.localRotation;
+        firstGrippingHand = dominantHand;
+        secondGrippingHand = (dominantHand == rightHand) ? leftHand : rightHand;
     }
 
     private void FixedUpdate()
@@ -138,14 +130,12 @@ public class WeaponHandling : MonoBehaviour
     {
         Debug.Log("One Hand Setup");
         rb.isKinematic = false;
-        lastSingleGrippingHand = grippingHand;
-        lastSingleGrippingHand.enablePhysics = false;
-        lastSingleGrippingHand.rb.isKinematic = true;
-        lastSingleFreeHand = (grippingHand == rightHand) ? leftHand : rightHand;
-        lastSingleFreeHand.enablePhysics = true;
-        lastSingleFreeHand.rb.isKinematic = false;
-
-        ResetGrabPointTransformLocals();
+        firstGrippingHand = grippingHand;
+        firstGrippingHand.enablePhysics = false;
+        firstGrippingHand.rb.isKinematic = true;
+        secondGrippingHand = (grippingHand == rightHand) ? leftHand : rightHand;
+        secondGrippingHand.enablePhysics = true;
+        secondGrippingHand.rb.isKinematic = false;
 
         Vector3 newAttachTransformLocalPos = new Vector3(0, 0, weapon.transform.InverseTransformPoint(grippingHand.grabPointTransform.position).z);
         if (grippingHand == rightHand)
@@ -156,7 +146,7 @@ public class WeaponHandling : MonoBehaviour
         else if (grippingHand == leftHand)
         {
             weapon.leftAttachTransform.localPosition = newAttachTransformLocalPos;
-            rb.position = weapon.leftAttachTransform.position;
+            rb.centerOfMass = weapon.transform.InverseTransformPoint(weapon.leftAttachTransform.position);
         }
 
         bool weaponIsFacingThumb = (Vector3.Dot(weapon.transform.forward, grippingHand.grabPointTransform.forward) >= 0);
@@ -203,21 +193,19 @@ public class WeaponHandling : MonoBehaviour
         grippingHand.transform.rotation = grippingHand.parentController.transform.rotation;
 
         // ## Weapon ##
-        // Position
-        weaponTargetPos = rightHand.grabPointTransform.position;
-        rb.velocity = (weaponTargetPos - weapon.rightAttachTransform.position) * positionSpeed * positionSpeedDamper * Time.deltaTime;
-
         // Rotation
-        
-        //if (!weapon.GetIsColliding())
+        weaponTargetRot = grippingHand.grabPointTransform.rotation;
+
+        // Position
+        if (grippingHand == rightHand)
         {
-            weaponTargetRot = grippingHand.grabPointTransform.rotation;
-
-            Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
-            rotDifference.ToAngleAxis(out float angleInDegrees, out Vector3 rotationAxis);
-
-            rb.maxAngularVelocity = maxAngularVelocity;
-            rb.angularVelocity = rotationAxis * angleInDegrees * Mathf.Deg2Rad * rotationSpeed * rotationSpeedDamper * Time.deltaTime;
+            weaponTargetPos = rightHand.grabPointTransform.position;
+            ProcessWeaponPhysics(weapon.rightAttachTransform.position);
+        }
+        else if (grippingHand == leftHand)
+        {
+            weaponTargetPos = leftHand.grabPointTransform.position;
+            ProcessWeaponPhysics(weapon.leftAttachTransform.position);
         }
     }
 
@@ -226,12 +214,34 @@ public class WeaponHandling : MonoBehaviour
     {
         Debug.Log("Two Hand Setup");
         rb.isKinematic = false;
-
-        //ResetHandLocals();
-        weapon.transform.SetParent(lastSingleGrippingHand.grabPointTransform);
-        weapon.transform.localPosition = (lastSingleGrippingHand == rightHand) ? -weapon.rightAttachTransform.localPosition : -weapon.leftAttachTransform.localPosition;
         rightHand.enablePhysics = false;
+        rightHand.rb.isKinematic = true;
         leftHand.enablePhysics = false;
+        leftHand.rb.isKinematic = true;
+
+        //ResetGrabPointTransformLocals();
+
+        // Set attach transforms on the weapon
+        Vector3 newAttachTransformLocalPos = new Vector3(0, 0, weapon.transform.InverseTransformPoint(secondGrippingHand.grabPointTransform.position).z);
+        if (secondGrippingHand == rightHand)
+        {
+            weapon.rightAttachTransform.localPosition = newAttachTransformLocalPos;
+        }
+        else if (secondGrippingHand == leftHand)
+        {
+            weapon.leftAttachTransform.localPosition = newAttachTransformLocalPos;
+        }
+
+        // Test if second hand is gripping above or below first gripping hand along the shaft
+        Vector3 handGripDirection = secondGrippingHand.grabPointTransform.position - firstGrippingHand.grabPointTransform.position;
+        if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
+        {
+            secondHandGrippingAboveFirst = true;
+        }
+        else
+        {
+            secondHandGrippingAboveFirst = false;
+        }
     }
 
     private void ProcessTwoHandedMovement()
@@ -239,71 +249,76 @@ public class WeaponHandling : MonoBehaviour
         if (mustSetupGrips)
         {
             SetupTwoHandedMovement();
-        }
-
-        // ## Updating hands ##
-
-        rightHand.transform.position = rightController.transform.position;
-        //rightHand.transform.rotation = rightController.transform.rotation;
-        leftHand.transform.position = leftController.transform.position;
-        //rightHand.transform.rotation = rightController.transform.rotation;
-
-        // ## Rotation ##
-
-        Vector3 handGripDirection = (lastSingleFreeHand.grabPointTransform.position - lastSingleGrippingHand.grabPointTransform.position).normalized;
-        Quaternion newRot = Quaternion.identity;
-
-        // Test if second hand is gripping above or below first gripping hand along the shaft
-        if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
-        {
-            newRot = Quaternion.LookRotation(handGripDirection);
-        }
-        else
-        {
-            newRot = Quaternion.LookRotation(-handGripDirection);
-        }
-        
-        lastSingleGrippingHand.grabPointTransform.rotation = newRot;
-
-        // ## Postion ##
-
-        if (mustSetupGrips)
-        {
-            // Setup attach position markers after rotation has been applied
-            weapon.rightAttachTransform.position = rightHand.grabPointTransform.position;
-            weapon.leftAttachTransform.position = leftHand.grabPointTransform.position;
             mustSetupGrips = false;
         }
 
-        float stretchDist = Vector3.Distance(rightHand.grabPointTransform.position, leftHand.grabPointTransform.position);
-        float baseStretchDist = Vector3.Distance(weapon.rightAttachTransform.position, weapon.leftAttachTransform.position);
-        float stretchCorrection = ((stretchDist - baseStretchDist) / 2);
-        Vector3 newPos = Vector3.zero;
+        // ## Hands ##
+        rightHand.transform.position = rightController.transform.position;
+        rightHand.transform.rotation = rightController.transform.rotation;
+        leftHand.transform.position = leftController.transform.position;
+        leftHand.transform.rotation = leftController.transform.rotation;
 
-        if (lastSingleGrippingHand == rightHand)
+        // ## Weapon ##
+        Vector3 handGripDirection = secondGrippingHand.grabPointTransform.position - firstGrippingHand.grabPointTransform.position;
+
+        // Rotation
+        if (secondHandGrippingAboveFirst)
         {
-            if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
-            {
-                newPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.rightAttachTransform.localPosition.z + stretchCorrection);
-            }
-            else
-            {
-                newPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.rightAttachTransform.localPosition.z - stretchCorrection);
-            }
+            weaponTargetRot = Quaternion.LookRotation(handGripDirection, firstGrippingHand.grabPointTransform.up);
         }
         else
         {
-            if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
-            {
-                newPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.leftAttachTransform.localPosition.z + stretchCorrection);
-            }
-            else
-            {
-                newPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.leftAttachTransform.localPosition.z - stretchCorrection);
-            }
+            weaponTargetRot = Quaternion.LookRotation(-handGripDirection, firstGrippingHand.grabPointTransform.up);
         }
 
-        weapon.transform.localPosition = newPos;
+        // Postion
+        weaponTargetPos = firstGrippingHand.grabPointTransform.position + (handGripDirection / 2);
+
+        Vector3 weaponGripDirection = weapon.leftAttachTransform.position - weapon.rightAttachTransform.position;
+        Vector3 weaponGripMidPoint = weapon.rightAttachTransform.position + (weaponGripDirection / 2);
+        rb.centerOfMass = weapon.transform.InverseTransformPoint(weaponGripMidPoint);
+
+        ProcessWeaponPhysics(weaponGripMidPoint);
+
+        //float stretchDist = Vector3.Distance(rightHand.grabPointTransform.position, leftHand.grabPointTransform.position);
+        //float baseStretchDist = Vector3.Distance(weapon.rightAttachTransform.position, weapon.leftAttachTransform.position);
+        //float stretchCorrection = ((stretchDist - baseStretchDist) / 2);
+
+        //if (firstGrippingHand == rightHand)
+        //{
+        //    if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
+        //    {
+        //        weaponTargetPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.rightAttachTransform.localPosition.z + stretchCorrection);
+        //    }
+        //    else
+        //    {
+        //        weaponTargetPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.rightAttachTransform.localPosition.z - stretchCorrection);
+        //    }
+        //}
+        //else
+        //{
+        //    if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
+        //    {
+        //        weaponTargetPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.leftAttachTransform.localPosition.z + stretchCorrection);
+        //    }
+        //    else
+        //    {
+        //        weaponTargetPos = new Vector3(weapon.transform.localPosition.x, weapon.transform.localPosition.y, -weapon.leftAttachTransform.localPosition.z - stretchCorrection);
+        //    }
+        //}
+    }
+
+    private void ProcessWeaponPhysics(Vector3 weaponTrackingPos)
+    {
+        // Movement
+        rb.velocity = (weaponTargetPos - weaponTrackingPos) * positionSpeed * positionSpeedDamper * Time.deltaTime;
+
+        // Rotation
+        Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
+        rotDifference.ToAngleAxis( out float angleInDegrees, out Vector3 rotationAxis);
+
+        rb.maxAngularVelocity = maxAngularVelocity;
+        rb.angularVelocity = rotationAxis * angleInDegrees * Mathf.Deg2Rad * rotationSpeed * rotationSpeedDamper * Time.deltaTime;
     }
 
 
@@ -311,7 +326,6 @@ public class WeaponHandling : MonoBehaviour
     {
         if (!weapon.GetPresenceState() && (dominantController.isGripActivated))
         {
-            ResetGrabPointTransformLocals();
             if (dominantHandType == HandTypes.RIGHT)
             {
                 weapon.transform.rotation = rightHand.grabPointTransform.rotation;
@@ -319,7 +333,8 @@ public class WeaponHandling : MonoBehaviour
             }
             else
             {
-                //weaponPivotPoint.transform.position = leftHand.grabPointTransform.position + (weapon.transform.position - weapon.spawnAttachTransform.position);
+                weapon.transform.rotation = leftHand.grabPointTransform.rotation;
+                weapon.transform.position = leftHand.grabPointTransform.position + (weapon.transform.position - weapon.spawnAttachTransform.position);
             }
 
             weapon.BeginMaterialising();
@@ -329,13 +344,5 @@ public class WeaponHandling : MonoBehaviour
         {
             weapon.BeginDematerialising();
         }
-    }
-
-    private void ResetGrabPointTransformLocals()
-    {
-        rightHand.grabPointTransform.localPosition = originRightHandAttachTransLocPos;
-        rightHand.grabPointTransform.localRotation = originRightHandAttachTransLocRot;
-        leftHand.grabPointTransform.localPosition = originLeftHandAttachTransLocPos;
-        leftHand.grabPointTransform.localRotation = originLeftHandAttachTransLocRot;
     }
 }

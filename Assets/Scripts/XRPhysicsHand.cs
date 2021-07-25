@@ -27,7 +27,7 @@ public class XRPhysicsHand : MonoBehaviour
         transform.rotation = parentController.transform.rotation;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (enablePhysics)
         {
