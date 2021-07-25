@@ -14,8 +14,7 @@ public class XRPhysicsHand : MonoBehaviour
     public XRHandVisuals handVisuals;
 
     [HideInInspector] public bool enablePhysics;
-
-    private Rigidbody rb;
+    [HideInInspector] public Rigidbody rb;
 
     private void Start()
     {

@@ -673,10 +673,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weapon: {fileID: 7324149667657232024}
   dominantHandType: 0
-  positionSpeed: 2500
-  positionSpeedDamper: 1
-  rotationSpeed: 3000
-  rotationSpeedDamper: 0.5
+  positionSpeed: 8000
+  positionSpeedDamper: 0.85
+  rotationSpeed: 8000
+  rotationSpeedDamper: 0.28
   maxAngularVelocity: 30
   leftController: {fileID: 344734777}
   leftHand: {fileID: 1882006857}
@@ -1153,6 +1153,7 @@ MonoBehaviour:
   maxAngularVelocity: 30
   handVisuals: {fileID: 1569001385}
   enablePhysics: 0
+  rb: {fileID: 0}
 --- !u!1 &925276024
 GameObject:
   m_ObjectHideFlags: 0
@@ -1563,6 +1564,7 @@ MonoBehaviour:
   maxAngularVelocity: 30
   handVisuals: {fileID: 726892700}
   enablePhysics: 0
+  rb: {fileID: 0}
 --- !u!1 &1882210225
 GameObject:
   m_ObjectHideFlags: 0
@@ -3017,7 +3019,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7324149667657232023}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 985ee1c097b0fa34093a96200788db1a, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.019
@@ -3064,7 +3066,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4811673620510615592}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 985ee1c097b0fa34093a96200788db1a, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -3252,7 +3254,7 @@ CapsuleCollider:
   m_GameObject: {fileID: 7324149667657232023}
   m_Material: {fileID: 0}
   m_IsTrigger: 1
-  m_Enabled: 1
+  m_Enabled: 0
   m_Radius: 0.038
   m_Height: 2.1
   m_Direction: 2

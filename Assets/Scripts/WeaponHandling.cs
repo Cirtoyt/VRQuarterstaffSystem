@@ -91,6 +91,8 @@ public class WeaponHandling : MonoBehaviour
             gripState = GripStates.EMPTY;
             rightHand.enablePhysics = true;
             leftHand.enablePhysics = true;
+            rightHand.rb.isKinematic = false;
+            leftHand.rb.isKinematic = false;
             rb.isKinematic = true;
         }
     }
@@ -136,17 +138,16 @@ public class WeaponHandling : MonoBehaviour
     {
         Debug.Log("One Hand Setup");
         rb.isKinematic = false;
-
         lastSingleGrippingHand = grippingHand;
         lastSingleGrippingHand.enablePhysics = false;
+        lastSingleGrippingHand.rb.isKinematic = true;
         lastSingleFreeHand = (grippingHand == rightHand) ? leftHand : rightHand;
         lastSingleFreeHand.enablePhysics = true;
+        lastSingleFreeHand.rb.isKinematic = false;
 
         ResetGrabPointTransformLocals();
 
-        // Set initial attach transform position & move weapon pivot point to it without moving the weapon
         Vector3 newAttachTransformLocalPos = new Vector3(0, 0, weapon.transform.InverseTransformPoint(grippingHand.grabPointTransform.position).z);
-        
         if (grippingHand == rightHand)
         {
             weapon.rightAttachTransform.localPosition = newAttachTransformLocalPos;
@@ -207,7 +208,8 @@ public class WeaponHandling : MonoBehaviour
         rb.velocity = (weaponTargetPos - weapon.rightAttachTransform.position) * positionSpeed * positionSpeedDamper * Time.deltaTime;
 
         // Rotation
-        if (!weapon.GetIsColliding())
+        
+        //if (!weapon.GetIsColliding())
         {
             weaponTargetRot = grippingHand.grabPointTransform.rotation;
 
