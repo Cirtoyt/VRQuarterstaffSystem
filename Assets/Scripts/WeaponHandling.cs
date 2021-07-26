@@ -16,7 +16,7 @@ public class WeaponHandling : MonoBehaviour
     [Header("Trying to find the right values")]
     [SerializeField] private float positionSpeed;
     [Range(0.01f, 1)][SerializeField] private float positionSpeedDamper;
-    [SerializeField] private float rotationSpeed;
+    //[SerializeField] private float rotationSpeed = 8000;
     [Range(0.01f, 1)] [SerializeField] private float rotationSpeedDamper;
     [SerializeField] private float maxAngularVelocity;
     [Header("Statics")]
@@ -41,6 +41,7 @@ public class WeaponHandling : MonoBehaviour
     private XRPhysicsHand dominantHand;
     private Vector3 weaponTargetPos;
     private Quaternion weaponTargetRot;
+    private bool weaponIsFacingThumb;
     private bool secondHandGrippingAboveFirst;
 
     private void Start()
@@ -137,46 +138,16 @@ public class WeaponHandling : MonoBehaviour
         secondGrippingHand.enablePhysics = true;
         secondGrippingHand.rb.isKinematic = false;
 
-        Vector3 newAttachTransformLocalPos = new Vector3(0, 0, weapon.transform.InverseTransformPoint(grippingHand.grabPointTransform.position).z);
         if (grippingHand == rightHand)
         {
-            weapon.rightAttachTransform.localPosition = newAttachTransformLocalPos;
             rb.centerOfMass = weapon.transform.InverseTransformPoint(weapon.rightAttachTransform.position);
         }
         else if (grippingHand == leftHand)
         {
-            weapon.leftAttachTransform.localPosition = newAttachTransformLocalPos;
             rb.centerOfMass = weapon.transform.InverseTransformPoint(weapon.leftAttachTransform.position);
         }
 
-        bool weaponIsFacingThumb = (Vector3.Dot(weapon.transform.forward, grippingHand.grabPointTransform.forward) >= 0);
-        Debug.Log(Vector3.Dot(weapon.transform.forward, grippingHand.grabPointTransform.forward));
-
-        //weapon.transform.SetParent(grippingHand.grabPointTransform);
-
-        //weapon.transform.localRotation = Quaternion.identity; // Maybe this should be set based on previous upper/lower grip forward facing direction
-
-        //Debug.Log(grippingHand.attachTransform.InverseTransformDirection(weapon.transform.forward).z);
-        //Debug.Log(Vector3.Dot(weapon.transform.forward, grippingHand.grabPointTransform.forward));
-        if (weaponIsFacingThumb)
-        //if (grippingHand.grabPointTransform.InverseTransformDirection(weapon.transform.forward).z >= 0)
-        {
-            //weaponTargetRot = Quaternion.identity;
-        }
-        else
-        {
-            //weaponTargetRot = Quaternion.identity;
-            //weapon.transform.localRotation.SetLookRotation(-grippingHand.grabPointTransform.forward);
-        }
-
-        if (grippingHand == rightHand)
-        {
-            //weaponTargetPos = rightHand.grabPointTransform.position + (weapon.transform.position - weapon.rightAttachTransform.position);
-        }
-        else
-        {
-            //weaponTargetPos = leftHand.grabPointTransform.position + (weapon.transform.position - weapon.leftAttachTransform.position);
-        }
+        weaponIsFacingThumb = Vector3.Dot(weapon.transform.forward, grippingHand.grabPointTransform.forward) >= 0;
     }
 
     private void ProcessOneHandedMovement(XRPhysicsHand grippingHand)
@@ -194,7 +165,14 @@ public class WeaponHandling : MonoBehaviour
 
         // ## Weapon ##
         // Rotation
-        weaponTargetRot = grippingHand.grabPointTransform.rotation;
+        if (weaponIsFacingThumb)
+        {
+            weaponTargetRot = Quaternion.LookRotation(grippingHand.grabPointTransform.forward, grippingHand.grabPointTransform.up);
+        }
+        else
+        {
+            weaponTargetRot = Quaternion.LookRotation(-grippingHand.grabPointTransform.forward, grippingHand.grabPointTransform.up);
+        }
 
         // Position
         if (grippingHand == rightHand)
@@ -290,11 +268,15 @@ public class WeaponHandling : MonoBehaviour
         Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
         rotDifference.ToAngleAxis( out float angleInDegrees, out Vector3 rotationAxis);
 
+        // Infinity if already aligned, so return
+        if (float.IsInfinity(rotationAxis.x))
+            return;
+
         if (angleInDegrees > 180)
             angleInDegrees -= 360;
 
         rb.maxAngularVelocity = maxAngularVelocity;
-        rb.angularVelocity = rotationAxis * angleInDegrees * Mathf.Deg2Rad * rotationSpeed * rotationSpeedDamper * Time.deltaTime;
+        rb.angularVelocity = (0.9f * rotationSpeedDamper * Mathf.Deg2Rad * angleInDegrees / Time.deltaTime) * rotationAxis.normalized;
     }
 
 
@@ -306,11 +288,13 @@ public class WeaponHandling : MonoBehaviour
             {
                 weapon.transform.rotation = rightHand.grabPointTransform.rotation;
                 weapon.transform.position = rightHand.grabPointTransform.position + (weapon.transform.position - weapon.spawnAttachTransform.position);
+                weapon.rightAttachTransform.position = weapon.spawnAttachTransform.position;
             }
             else
             {
                 weapon.transform.rotation = leftHand.grabPointTransform.rotation;
                 weapon.transform.position = leftHand.grabPointTransform.position + (weapon.transform.position - weapon.spawnAttachTransform.position);
+                weapon.leftAttachTransform.position = weapon.spawnAttachTransform.position;
             }
 
             weapon.BeginMaterialising();

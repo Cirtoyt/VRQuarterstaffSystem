@@ -9,6 +9,13 @@ public class Weapon : MonoBehaviour
     public Transform spawnAttachTransform;
     public Collider[] physicsColliders;
     public MeshRenderer[] meshesRenderers;
+    [Header("Variables")]
+    [SerializeField] private float minParticleAngVec;
+    [SerializeField] private float maxParticleAngVec;
+
+    private Rigidbody rb;
+    private ParticleSystem northPS;
+    private ParticleSystem southPS;
 
     private bool isPresent = false;
     private bool isSolid = false;
@@ -24,6 +31,10 @@ public class Weapon : MonoBehaviour
 
     private void Start()
     {
+        rb = GetComponent<Rigidbody>();
+        northPS = transform.Find("North Trail Effect").GetComponent<ParticleSystem>();
+        southPS = transform.Find("South Trail Effect").GetComponent<ParticleSystem>();
+
         originRightAttachTransLocPos = rightAttachTransform.localPosition;
         originRightAttachTransLocRot = rightAttachTransform.localRotation;
         originLeftAttachTransLocPos = leftAttachTransform.localPosition;
@@ -85,6 +96,32 @@ public class Weapon : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void FixedUpdate()
+    {
+        float alpha = 0;
+        if (rb.angularVelocity.magnitude >= minParticleAngVec && rb.angularVelocity.magnitude <= maxParticleAngVec)
+        {
+            float range = maxParticleAngVec - minParticleAngVec;
+            float correctedStartValue = rb.angularVelocity.magnitude - minParticleAngVec;
+            alpha = correctedStartValue / range;
+        }
+        else if (rb.angularVelocity.magnitude > maxParticleAngVec)
+        {
+            alpha = 1;
+        }
+
+        Gradient northGradient = northPS.colorOverLifetime.color.gradient;
+        northGradient.SetKeys(northGradient.colorKeys, new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0), new GradientAlphaKey(0, 1) });
+        var northColourOverLifetime = northPS.colorOverLifetime;
+        northColourOverLifetime.color = northGradient;
+
+        Gradient southGradient = southPS.colorOverLifetime.color.gradient;
+        southGradient.SetKeys(southGradient.colorKeys, new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0), new GradientAlphaKey(0, 1) });
+        var southColourOverLifetime = southPS.colorOverLifetime;
+        southColourOverLifetime.color = southGradient;
+        //grad.SetKeys(new GradientColorKey[] {new GradientColorKey(Color.blue, 0.0f), new GradientColorKey(Color.red, 1.0f) }, new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(0.0f, 1.0f) });
     }
 
     public void BeginMaterialising()
