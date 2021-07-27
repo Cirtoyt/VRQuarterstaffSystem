@@ -4,18 +4,20 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
+    [Header("Statics")]
     public Transform rightAttachTransform;
     public Transform leftAttachTransform;
     public Transform spawnAttachTransform;
+    public ParticleSystem northPS;
+    public ParticleSystem southPS;
     public Collider[] physicsColliders;
     public MeshRenderer[] meshesRenderers;
     [Header("Variables")]
+    public float weaponLength;
     [SerializeField] private float minParticleAngVec;
     [SerializeField] private float maxParticleAngVec;
 
     private Rigidbody rb;
-    private ParticleSystem northPS;
-    private ParticleSystem southPS;
 
     private bool isPresent = false;
     private bool isSolid = false;
@@ -32,8 +34,6 @@ public class Weapon : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
-        northPS = transform.Find("North Trail Effect").GetComponent<ParticleSystem>();
-        southPS = transform.Find("South Trail Effect").GetComponent<ParticleSystem>();
 
         originRightAttachTransLocPos = rightAttachTransform.localPosition;
         originRightAttachTransLocRot = rightAttachTransform.localRotation;
@@ -62,6 +62,9 @@ public class Weapon : MonoBehaviour
                 ResetWeaponLocals();
                 isDematerialising = false;
                 isPresent = false;
+
+                northPS.Stop();
+                southPS.Stop();
             }
         }
 
@@ -82,6 +85,9 @@ public class Weapon : MonoBehaviour
                 {
                     meshRenderer.enabled = true;
                 }
+
+                northPS.Play();
+                southPS.Play();
             }
             else
             {

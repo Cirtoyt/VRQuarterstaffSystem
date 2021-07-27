@@ -11,12 +11,12 @@ TagManager:
   - XRBody
   - Water
   - UI
-  - Ground
+  - 
   - Environment
   - Grabbable
   - XRHand
   - Held Grabbable
-  - 
+  - Ragdoll
   - 
   - 
   - 

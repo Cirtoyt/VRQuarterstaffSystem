@@ -16,8 +16,13 @@ public class WeaponHandling : MonoBehaviour
     [Header("Trying to find the right values")]
     [SerializeField] private float positionSpeed;
     [Range(0.01f, 1)][SerializeField] private float positionSpeedDamper;
+    [Range(0.01f, 1)] [SerializeField] private float minPositionSpeedDamper;
+    [Range(0.01f, 1)] [SerializeField] private float maxPositionSpeedDamper;
     //[SerializeField] private float rotationSpeed = 8000;
     [Range(0.01f, 1)] [SerializeField] private float rotationSpeedDamper;
+    [Range(0.01f, 1)] [SerializeField] private float minRotationSpeedDamper;
+    [Range(0.01f, 1)] [SerializeField] private float maxRotationSpeedDamper;
+    [Range(0.01f, 1)] [SerializeField] private float oneHandedSpeedDamperMultiplier;
     [SerializeField] private float maxAngularVelocity;
     [Header("Statics")]
     [SerializeField] private XRController leftController;
@@ -129,7 +134,6 @@ public class WeaponHandling : MonoBehaviour
 
     private void SetupOneHandedMovement(XRPhysicsHand grippingHand)
     {
-        Debug.Log("One Hand Setup");
         rb.isKinematic = false;
         firstGrippingHand = grippingHand;
         firstGrippingHand.enablePhysics = false;
@@ -146,6 +150,8 @@ public class WeaponHandling : MonoBehaviour
         {
             rb.centerOfMass = weapon.transform.InverseTransformPoint(weapon.leftAttachTransform.position);
         }
+
+        UpdateDampers();
 
         weaponIsFacingThumb = Vector3.Dot(weapon.transform.forward, grippingHand.grabPointTransform.forward) >= 0;
     }
@@ -190,7 +196,6 @@ public class WeaponHandling : MonoBehaviour
 
     private void SetupTwoHandedMovement()
     {
-        Debug.Log("Two Hand Setup");
         rb.isKinematic = false;
         rightHand.enablePhysics = false;
         rightHand.rb.isKinematic = true;
@@ -209,6 +214,8 @@ public class WeaponHandling : MonoBehaviour
         {
             weapon.leftAttachTransform.localPosition = newAttachTransformLocalPos;
         }
+
+        UpdateDampers();
 
         // Test if second hand is gripping above or below first gripping hand along the shaft
         Vector3 handGripDirection = secondGrippingHand.grabPointTransform.position - firstGrippingHand.grabPointTransform.position;
@@ -277,6 +284,50 @@ public class WeaponHandling : MonoBehaviour
 
         rb.maxAngularVelocity = maxAngularVelocity;
         rb.angularVelocity = (0.9f * rotationSpeedDamper * Mathf.Deg2Rad * angleInDegrees / Time.deltaTime) * rotationAxis.normalized;
+    }
+
+    private void UpdateDampers()
+    {
+        float closestDistance;
+        float damperStrength;
+
+        if (gripState == GripStates.TWOHANDED)
+        {
+            // When both on one side of the weapon:
+            closestDistance = Vector3.Distance(weapon.rightAttachTransform.position, weapon.transform.position);
+            float leftDist = Vector3.Distance(weapon.leftAttachTransform.position, weapon.transform.position);
+            if (leftDist < closestDistance)
+                closestDistance = leftDist;
+
+            damperStrength = 1 - (closestDistance / (weapon.weaponLength / 2));
+
+            // When one hand is on either side of the weapon centre:
+            if ((weapon.rightAttachTransform.localPosition.z >= 0 && weapon.leftAttachTransform.localPosition.z <= 0)
+                || (weapon.leftAttachTransform.localPosition.z >= 0 && weapon.rightAttachTransform.localPosition.z <= 0))
+            {
+                // You have full control - no damper is applied to position & rotation
+                damperStrength = 1;
+            }
+        }
+        else // gripState == GripStates.ONEHANDED
+        {
+            if (firstGrippingHand == rightHand)
+            {
+                closestDistance = Vector3.Distance(weapon.rightAttachTransform.position, weapon.transform.position);
+            }
+            else // firstGrippingHand == leftHand
+            {
+                closestDistance = Vector3.Distance(weapon.leftAttachTransform.position, weapon.transform.position);
+            }
+
+            damperStrength = (1 - (closestDistance / (weapon.weaponLength / 2))) * oneHandedSpeedDamperMultiplier;
+        }
+
+        float positionDamperRange = maxPositionSpeedDamper - minPositionSpeedDamper;
+        float rotationDamperRange = maxRotationSpeedDamper - minRotationSpeedDamper;
+
+        positionSpeedDamper = (positionDamperRange * damperStrength) + minPositionSpeedDamper;
+        rotationSpeedDamper = (rotationDamperRange * damperStrength) + minRotationSpeedDamper;
     }
 
 
