@@ -23,6 +23,7 @@ public class WeaponHandling : MonoBehaviour
     [Range(0.01f, 1)] [SerializeField] private float minRotationSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float maxRotationSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float oneHandedSpeedDamperMultiplier;
+    [Range(0.01f, 1)] [SerializeField] private float minGripDistanceStrengthMultiplier;
     [SerializeField] private float maxAngularVelocity;
     [Header("Statics")]
     [SerializeField] private XRController leftController;
@@ -288,39 +289,46 @@ public class WeaponHandling : MonoBehaviour
 
     private void UpdateDampers()
     {
-        float closestDistance;
+        float closestToCentreDistance;
         float damperStrength;
 
         if (gripState == GripStates.TWOHANDED)
         {
-            // When both on one side of the weapon:
-            closestDistance = Vector3.Distance(weapon.rightAttachTransform.position, weapon.transform.position);
+            // Calculate multipler based on how far away from the centre of mass the closest hand is
+            // (maybe switch to how far away centre of two grip points are)
+            closestToCentreDistance = Vector3.Distance(weapon.rightAttachTransform.position, weapon.transform.position);
             float leftDist = Vector3.Distance(weapon.leftAttachTransform.position, weapon.transform.position);
-            if (leftDist < closestDistance)
-                closestDistance = leftDist;
+            if (leftDist < closestToCentreDistance)
+                closestToCentreDistance = leftDist;
+            float closestToCentreStrengthMultipler = 1 - (closestToCentreDistance / (weapon.weaponLength / 2));
 
-            damperStrength = 1 - (closestDistance / (weapon.weaponLength / 2));
+            float gripDistance = Vector3.Distance(weapon.rightAttachTransform.position, weapon.leftAttachTransform.position);
+            float gripOverWeaponLength = gripDistance / weapon.weaponLength;
+            float gripStrengthRange = 1 - minGripDistanceStrengthMultiplier;
+            float gripStrengthMultipler = (gripStrengthRange * gripOverWeaponLength) + minGripDistanceStrengthMultiplier;
+
+            damperStrength = closestToCentreStrengthMultipler * gripStrengthMultipler;
 
             // When one hand is on either side of the weapon centre:
             if ((weapon.rightAttachTransform.localPosition.z >= 0 && weapon.leftAttachTransform.localPosition.z <= 0)
                 || (weapon.leftAttachTransform.localPosition.z >= 0 && weapon.rightAttachTransform.localPosition.z <= 0))
             {
-                // You have full control - no damper is applied to position & rotation
-                damperStrength = 1;
+                // Only grip distance multiplier is applied as you have full control over the centre of mass
+                damperStrength = gripStrengthMultipler;
             }
         }
         else // gripState == GripStates.ONEHANDED
         {
             if (firstGrippingHand == rightHand)
             {
-                closestDistance = Vector3.Distance(weapon.rightAttachTransform.position, weapon.transform.position);
+                closestToCentreDistance = Vector3.Distance(weapon.rightAttachTransform.position, weapon.transform.position);
             }
             else // firstGrippingHand == leftHand
             {
-                closestDistance = Vector3.Distance(weapon.leftAttachTransform.position, weapon.transform.position);
+                closestToCentreDistance = Vector3.Distance(weapon.leftAttachTransform.position, weapon.transform.position);
             }
 
-            damperStrength = (1 - (closestDistance / (weapon.weaponLength / 2))) * oneHandedSpeedDamperMultiplier;
+            damperStrength = (1 - (closestToCentreDistance / (weapon.weaponLength / 2))) * oneHandedSpeedDamperMultiplier;
         }
 
         float positionDamperRange = maxPositionSpeedDamper - minPositionSpeedDamper;

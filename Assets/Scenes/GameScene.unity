@@ -677,15 +677,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weapon: {fileID: 7324149667657232024}
   dominantHandType: 0
-  positionSpeed: 8000
+  positionSpeed: 10000
   positionSpeedDamper: 0.89875835
   minPositionSpeedDamper: 0.8
   maxPositionSpeedDamper: 1
-  rotationSpeed: 1
   rotationSpeedDamper: 0.3273457
   minRotationSpeedDamper: 0.156
   maxRotationSpeedDamper: 0.503
   oneHandedSpeedDamperMultiplier: 0.5
+  minGripDistanceStrengthMultiplier: 0.72
   maxAngularVelocity: 30
   leftController: {fileID: 344734777}
   leftHand: {fileID: 1882006857}
@@ -13230,6 +13230,7 @@ MonoBehaviour:
   weaponLength: 1.7
   minParticleAngVec: 6.5
   maxParticleAngVec: 25
+  trailParticleAlphaMax: 0.3
 --- !u!54 &7324149667657232025
 Rigidbody:
   m_ObjectHideFlags: 0

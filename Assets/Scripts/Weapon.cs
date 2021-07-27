@@ -16,6 +16,7 @@ public class Weapon : MonoBehaviour
     public float weaponLength;
     [SerializeField] private float minParticleAngVec;
     [SerializeField] private float maxParticleAngVec;
+    [SerializeField] private float trailParticleAlphaMax;
 
     private Rigidbody rb;
 
@@ -119,12 +120,12 @@ public class Weapon : MonoBehaviour
         }
 
         Gradient northGradient = northPS.colorOverLifetime.color.gradient;
-        northGradient.SetKeys(northGradient.colorKeys, new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0), new GradientAlphaKey(0, 1) });
+        northGradient.SetKeys(northGradient.colorKeys, new GradientAlphaKey[] { new GradientAlphaKey(alpha * trailParticleAlphaMax, 0), new GradientAlphaKey(0, 1) });
         var northColourOverLifetime = northPS.colorOverLifetime;
         northColourOverLifetime.color = northGradient;
 
         Gradient southGradient = southPS.colorOverLifetime.color.gradient;
-        southGradient.SetKeys(southGradient.colorKeys, new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0), new GradientAlphaKey(0, 1) });
+        southGradient.SetKeys(southGradient.colorKeys, new GradientAlphaKey[] { new GradientAlphaKey(alpha * trailParticleAlphaMax, 0), new GradientAlphaKey(0, 1) });
         var southColourOverLifetime = southPS.colorOverLifetime;
         southColourOverLifetime.color = southGradient;
         //grad.SetKeys(new GradientColorKey[] {new GradientColorKey(Color.blue, 0.0f), new GradientColorKey(Color.red, 1.0f) }, new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(0.0f, 1.0f) });
