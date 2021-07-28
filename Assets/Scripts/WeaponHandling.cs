@@ -13,18 +13,20 @@ public class WeaponHandling : MonoBehaviour
     [Header("Options")]
     public Weapon weapon;
     public HandTypes dominantHandType;
-    [Header("Trying to find the right values")]
+    [Range(0.01f, 0.2f)] [SerializeField] private float grabRadius;
+    [SerializeField] private LayerMask grabbableLayer;
     [SerializeField] private float positionSpeed;
-    [Range(0.01f, 1)][SerializeField] private float positionSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float minPositionSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float maxPositionSpeedDamper;
     //[SerializeField] private float rotationSpeed = 8000;
-    [Range(0.01f, 1)] [SerializeField] private float rotationSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float minRotationSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float maxRotationSpeedDamper;
+    [Space]
     [Range(0.01f, 1)] [SerializeField] private float oneHandedSpeedDamperMultiplier;
     [Range(0.01f, 1)] [SerializeField] private float minGripDistanceStrengthMultiplier;
-    [SerializeField] private float maxAngularVelocity;
+    [Header("Debugging")]
+    [Range(0.01f, 1)] [SerializeField] private float positionSpeedDamper;
+    [Range(0.01f, 1)] [SerializeField] private float rotationSpeedDamper;
     [Header("Statics")]
     [SerializeField] private XRController leftController;
     [SerializeField] private XRPhysicsHand leftHand;
@@ -34,12 +36,15 @@ public class WeaponHandling : MonoBehaviour
     private enum GripStates
     {
         EMPTY,
-        ONEHANDED,
+        RIGHTHANDED,
+        LEFTHANDED,
         TWOHANDED,
     }
 
     private GripStates gripState;
     private bool mustSetupGrips;
+    private bool lastRightGripValue;
+    private bool lastLeftGripValue;
     private Rigidbody rb;
     private XRPhysicsHand firstGrippingHand;
     private XRPhysicsHand secondGrippingHand;
@@ -54,7 +59,9 @@ public class WeaponHandling : MonoBehaviour
     {
         gripState = GripStates.EMPTY;
         mustSetupGrips = false;
+        lastRightGripValue = lastLeftGripValue = false;
         rb = weapon.GetComponent<Rigidbody>();
+        rb.maxAngularVelocity = 30;
 
         switch (dominantHandType)
         {
@@ -77,22 +84,18 @@ public class WeaponHandling : MonoBehaviour
         // ## SPAWNING ##
         UpdateWeaponSpawnState();
 
+        // ## CHECKING GRIP CHANCES ##
+        CheckGripChanges();
+
         // ## WEAPON MOVEMENT ##
         if (weapon.GetPresenceState())
         {
             MoveWeapon();
         }
-
-        // ## ENTERING EMPTY GRIP MODE ##
-        if (!rightController.isGripActivated && !leftController.isGripActivated
-            && gripState != GripStates.EMPTY)
+        else
         {
-            gripState = GripStates.EMPTY;
-            rightHand.enablePhysics = true;
-            leftHand.enablePhysics = true;
-            rightHand.rb.isKinematic = false;
-            leftHand.rb.isKinematic = false;
-            rb.isKinematic = true;
+            weapon.transform.position = dominantHand.grabPointTransform.position;
+            weapon.transform.rotation = dominantHand.grabPointTransform.rotation;
         }
     }
 
@@ -101,44 +104,84 @@ public class WeaponHandling : MonoBehaviour
         //Doing movement in fixed update is just less fluid due to movement being setting position and rotation values to hands which update in regular Update in real time
     }
 
-    private void MoveWeapon()
+    private void CheckGripChanges()
     {
-        // ## ONE-HANDED MODE ##
-        if (rightController.isGripActivated && !leftController.isGripActivated)
+        if (lastRightGripValue != rightController.isGripActivated
+            || lastLeftGripValue != leftController.isGripActivated)
         {
-            UpdateGripState(GripStates.ONEHANDED);
-            ProcessOneHandedMovement(rightHand);
-        }
-        else if (leftController.isGripActivated && !rightController.isGripActivated)
-        {
-            UpdateGripState(GripStates.ONEHANDED);
-            ProcessOneHandedMovement(leftHand);
-        }
+            // ## ONE-HANDED MODE ##
+            if ((rightController.isGripActivated && !leftController.isGripActivated && IsWithinGrabRange(rightHand))
+                || (rightController.isGripActivated && leftController.isGripActivated && IsWithinGrabRange(rightHand) && !IsWithinGrabRange(leftHand)))
+            {
+                UpdateGripState(GripStates.RIGHTHANDED);
+            }
+            else if ((leftController.isGripActivated && !rightController.isGripActivated && IsWithinGrabRange(leftHand))
+                     || (leftController.isGripActivated && rightController.isGripActivated && IsWithinGrabRange(leftHand) && !IsWithinGrabRange(rightHand)))
+            {
+                UpdateGripState(GripStates.LEFTHANDED);
+            }
 
-        // ## TWO-HANDED MODE ##
-        else if (rightController.isGripActivated && leftController.isGripActivated)
-        {
-            UpdateGripState(GripStates.TWOHANDED);
-            ProcessTwoHandedMovement();
+            // ## TWO-HANDED MODE ##
+            else if (rightController.isGripActivated && leftController.isGripActivated
+                     && IsWithinGrabRange(rightHand) && IsWithinGrabRange(leftHand))
+            {
+                UpdateGripState(GripStates.TWOHANDED);
+            }
+
+            // ## EMPTY GRIP MODE ##
+            else if (!rightController.isGripActivated && !leftController.isGripActivated)
+            {
+                UpdateGripState(GripStates.EMPTY);
+                rightHand.enablePhysics = true;
+                leftHand.enablePhysics = true;
+                rightHand.rb.isKinematic = false;
+                leftHand.rb.isKinematic = false;
+                rb.isKinematic = true;
+            }
+
+            lastRightGripValue = rightController.isGripActivated;
+            lastLeftGripValue = leftController.isGripActivated;
         }
+    }
+
+    private bool IsWithinGrabRange(XRPhysicsHand grabbingHand)
+    {
+        return Physics.CheckSphere(grabbingHand.grabPointTransform.position, grabRadius, grabbableLayer, QueryTriggerInteraction.Collide);
     }
 
     private void UpdateGripState(GripStates newState)
     {
-        if (gripState != newState)
-        {
-            gripState = newState;
+        gripState = newState;
+
+        if (newState != GripStates.EMPTY)
             mustSetupGrips = true;
-        }
     }
 
+    private void MoveWeapon()
+    {
+        // ## ONE-HANDED MODE ##
+        if (gripState == GripStates.RIGHTHANDED)
+        {
+            ProcessOneHandedMovement(rightHand);
+        }
+        else if (gripState == GripStates.LEFTHANDED)
+        {
+            ProcessOneHandedMovement(leftHand);
+        }
+
+        // ## TWO-HANDED MODE ##
+        else if (gripState == GripStates.TWOHANDED)
+        {
+            ProcessTwoHandedMovement();
+        }
+    }
 
     private void SetupOneHandedMovement(XRPhysicsHand grippingHand)
     {
         rb.isKinematic = false;
         firstGrippingHand = grippingHand;
-        firstGrippingHand.enablePhysics = false;
-        firstGrippingHand.rb.isKinematic = true;
+        firstGrippingHand.enablePhysics = true;
+        firstGrippingHand.rb.isKinematic = false;
         secondGrippingHand = (grippingHand == rightHand) ? leftHand : rightHand;
         secondGrippingHand.enablePhysics = true;
         secondGrippingHand.rb.isKinematic = false;
@@ -167,8 +210,8 @@ public class WeaponHandling : MonoBehaviour
 
         // ## Hands ##
         // Hand instantaneously tracks controller without any physics, but must handle visuals seperately
-        grippingHand.transform.position = grippingHand.parentController.transform.position;
-        grippingHand.transform.rotation = grippingHand.parentController.transform.rotation;
+        //grippingHand.transform.position = grippingHand.parentController.transform.position;
+        //grippingHand.transform.rotation = grippingHand.parentController.transform.rotation;
 
         // ## Weapon ##
         // Rotation
@@ -194,14 +237,13 @@ public class WeaponHandling : MonoBehaviour
         }
     }
 
-
     private void SetupTwoHandedMovement()
     {
         rb.isKinematic = false;
-        rightHand.enablePhysics = false;
-        rightHand.rb.isKinematic = true;
-        leftHand.enablePhysics = false;
-        leftHand.rb.isKinematic = true;
+        rightHand.enablePhysics = true;
+        rightHand.rb.isKinematic = false;
+        leftHand.enablePhysics = true;
+        leftHand.rb.isKinematic = false;
 
         //ResetGrabPointTransformLocals();
 
@@ -239,10 +281,10 @@ public class WeaponHandling : MonoBehaviour
         }
 
         // ## Hands ##
-        rightHand.transform.position = rightController.transform.position;
-        rightHand.transform.rotation = rightController.transform.rotation;
-        leftHand.transform.position = leftController.transform.position;
-        leftHand.transform.rotation = leftController.transform.rotation;
+        //rightHand.transform.position = rightController.transform.position;
+        //rightHand.transform.rotation = rightController.transform.rotation;
+        //leftHand.transform.position = leftController.transform.position;
+        //leftHand.transform.rotation = leftController.transform.rotation;
 
         // ## Weapon ##
         Vector3 handGripDirection = secondGrippingHand.grabPointTransform.position - firstGrippingHand.grabPointTransform.position;
@@ -265,26 +307,6 @@ public class WeaponHandling : MonoBehaviour
         rb.centerOfMass = weapon.transform.InverseTransformPoint(weaponGripMidPoint);
 
         ProcessWeaponPhysics(weaponGripMidPoint);
-    }
-
-    private void ProcessWeaponPhysics(Vector3 weaponTrackingPos)
-    {
-        // Movement
-        rb.velocity = (weaponTargetPos - weaponTrackingPos) * positionSpeed * positionSpeedDamper * Time.deltaTime;
-
-        // Rotation
-        Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
-        rotDifference.ToAngleAxis( out float angleInDegrees, out Vector3 rotationAxis);
-
-        // Infinity if already aligned, so return
-        if (float.IsInfinity(rotationAxis.x))
-            return;
-
-        if (angleInDegrees > 180)
-            angleInDegrees -= 360;
-
-        rb.maxAngularVelocity = maxAngularVelocity;
-        rb.angularVelocity = (0.9f * rotationSpeedDamper * Mathf.Deg2Rad * angleInDegrees / Time.deltaTime) * rotationAxis.normalized;
     }
 
     private void UpdateDampers()
@@ -317,7 +339,7 @@ public class WeaponHandling : MonoBehaviour
                 damperStrength = gripStrengthMultipler;
             }
         }
-        else // gripState == GripStates.ONEHANDED
+        else // gripState == GripStates.RIGHTHANDED || GripStates.LEFTHANDED
         {
             if (firstGrippingHand == rightHand)
             {
@@ -338,6 +360,24 @@ public class WeaponHandling : MonoBehaviour
         rotationSpeedDamper = (rotationDamperRange * damperStrength) + minRotationSpeedDamper;
     }
 
+    private void ProcessWeaponPhysics(Vector3 weaponTrackingPos)
+    {
+        // Movement
+        rb.velocity = (weaponTargetPos - weaponTrackingPos) * positionSpeed * positionSpeedDamper * Time.deltaTime;
+
+        // Rotation
+        Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
+        rotDifference.ToAngleAxis(out float angleInDegrees, out Vector3 rotationAxis);
+
+        // Infinity if already aligned, so return
+        if (float.IsInfinity(rotationAxis.x))
+            return;
+
+        if (angleInDegrees > 180)
+            angleInDegrees -= 360;
+
+        rb.angularVelocity = (0.9f * rotationSpeedDamper * Mathf.Deg2Rad * angleInDegrees / Time.deltaTime) * rotationAxis.normalized;
+    }
 
     private void UpdateWeaponSpawnState()
     {
@@ -363,5 +403,12 @@ public class WeaponHandling : MonoBehaviour
         {
             weapon.BeginDematerialising();
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(rightHand.grabPointTransform.position, grabRadius);
+        Gizmos.DrawWireSphere(leftHand.grabPointTransform.position, grabRadius);
     }
 }

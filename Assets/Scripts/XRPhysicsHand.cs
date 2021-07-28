@@ -9,7 +9,6 @@ public class XRPhysicsHand : MonoBehaviour
     public Transform grabPointTransform;
     [SerializeField] private float positionSpeed = 20;
     [Range(0.01f,1)][SerializeField] private float rotationSpeedDamper = 100;
-    public float maxAngularVelocity = 30;
     [Header("Statics")]
     public XRHandVisuals handVisuals;
 
@@ -19,7 +18,7 @@ public class XRPhysicsHand : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.maxAngularVelocity = maxAngularVelocity;
+        rb.maxAngularVelocity = 30;
 
         enablePhysics = true;
 
@@ -38,7 +37,6 @@ public class XRPhysicsHand : MonoBehaviour
             Quaternion rotDifference = parentController.transform.rotation * Quaternion.Inverse(transform.rotation);
             rotDifference.ToAngleAxis(out float angleInDegrees, out Vector3 rotationAxis);
 
-            rb.maxAngularVelocity = maxAngularVelocity;
             rb.angularVelocity = (0.9f * rotationSpeedDamper * Mathf.Deg2Rad * angleInDegrees / Time.deltaTime) * rotationAxis.normalized;
         }
     }

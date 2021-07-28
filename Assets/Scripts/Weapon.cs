@@ -19,14 +19,12 @@ public class Weapon : MonoBehaviour
     [SerializeField] private float trailParticleAlphaMax;
 
     private Rigidbody rb;
-
     private bool isPresent = false;
     private bool isSolid = false;
     private bool lastIsSolid = false;
     private bool isMaterialising = false;
     private bool isDematerialising = false;
     private bool isColliding = false;
-
     private Vector3 originRightAttachTransLocPos;
     private Quaternion originRightAttachTransLocRot;
     private Vector3 originLeftAttachTransLocPos;
@@ -34,12 +32,29 @@ public class Weapon : MonoBehaviour
 
     private void Start()
     {
-        rb = GetComponent<Rigidbody>();
+        northPS.Stop();
+        southPS.Stop();
 
+        rb = GetComponent<Rigidbody>();
+        isPresent = false;
+        isSolid = false;
+        lastIsSolid = false;
+        isMaterialising = false;
+        isDematerialising = false;
+        isColliding = false;
         originRightAttachTransLocPos = rightAttachTransform.localPosition;
         originRightAttachTransLocRot = rightAttachTransform.localRotation;
         originLeftAttachTransLocPos = leftAttachTransform.localPosition;
         originLeftAttachTransLocRot = leftAttachTransform.localRotation;
+
+        foreach (Collider collider in physicsColliders)
+        {
+            collider.isTrigger = true;
+        }
+        foreach (MeshRenderer meshRenderer in meshesRenderers)
+        {
+            meshRenderer.enabled = false;
+        }
     }
 
     void Update()
@@ -61,11 +76,20 @@ public class Weapon : MonoBehaviour
             if (true)
             {
                 ResetWeaponLocals();
-                isDematerialising = false;
-                isPresent = false;
-
                 northPS.Stop();
                 southPS.Stop();
+
+                foreach (Collider collider in physicsColliders)
+                {
+                    collider.isTrigger = true;
+                }
+                foreach (MeshRenderer meshRenderer in meshesRenderers)
+                {
+                    meshRenderer.enabled = false;
+                }
+
+                isDematerialising = false;
+                isPresent = false;
             }
         }
 
@@ -80,7 +104,7 @@ public class Weapon : MonoBehaviour
                 // Enable colliders, do a 'pop' visual effect, play a sound effect, etc
                 foreach (Collider collider in physicsColliders)
                 {
-                    collider.enabled = true;
+                    collider.isTrigger = false;
                 }
                 foreach (MeshRenderer meshRenderer in meshesRenderers)
                 {
@@ -92,15 +116,7 @@ public class Weapon : MonoBehaviour
             }
             else
             {
-                // Disable colliders, update a hud element to show weapon is no longer fully active (present), etc
-                foreach (Collider collider in physicsColliders)
-                {
-                    collider.enabled = false;
-                }
-                foreach (MeshRenderer meshRenderer in meshesRenderers)
-                {
-                    meshRenderer.enabled = false;
-                }
+                // Do stuff when the weapon starts to become non-solid e.g. particle effect
             }
         }
     }
