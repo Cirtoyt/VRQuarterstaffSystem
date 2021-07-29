@@ -79,6 +79,9 @@ public class WeaponHandling : MonoBehaviour
         // ## CHECKING GRIP CHANCES ##
         CheckGripChanges();
 
+        // ## GRIP REPOSITIONING ##
+        GripRepositioning();
+
         // ## WEAPON MOVEMENT ##
         if (weapon.GetPresenceState())
         {
@@ -138,7 +141,10 @@ public class WeaponHandling : MonoBehaviour
 
     private bool IsWithinGrabRange(XRPhysicsHand grabbingHand)
     {
-        return Physics.CheckSphere(grabbingHand.grabPointTransform.position, grabRadius, grabbableLayer, QueryTriggerInteraction.Collide);
+        bool overlapping = Physics.CheckSphere(grabbingHand.grabPointTransform.position, grabRadius, grabbableLayer, QueryTriggerInteraction.Collide);
+        bool onStaff = Vector3.Distance(weapon.transform.position, grabbingHand.grabPointTransform.position) <= weapon.weaponLength / 2;
+
+        return overlapping && onStaff;
     }
 
     private void UpdateGripState(GripStates newState)
@@ -147,6 +153,82 @@ public class WeaponHandling : MonoBehaviour
 
         if (newState != GripStates.EMPTY)
             mustSetupGrips = true;
+    }
+
+    private void GripRepositioning()
+    {
+        if (gripState == GripStates.TWOHANDED)
+        {
+            if (rightController.isTriggerActivated && !leftController.isTriggerActivated)
+            {
+                MoveGripPosition(rightHand.grabPointTransform, weapon.rightAttachTransform);
+            }
+            else if (leftController.isTriggerActivated && !rightController.isTriggerActivated)
+            {
+                MoveGripPosition(leftHand.grabPointTransform, weapon.leftAttachTransform);
+            }
+            else if (rightController.isTriggerActivated && leftController.isTriggerActivated)
+            {
+                SimulateLooseGripGravity();
+            }
+        }
+        else if (gripState == GripStates.RIGHTHANDED && rightController.isTriggerActivated)
+        {
+            SimulateLooseGripGravity();
+        }
+        else if (gripState == GripStates.LEFTHANDED && leftController.isTriggerActivated)
+        {
+            SimulateLooseGripGravity();
+        }
+    }
+
+    private void MoveGripPosition(Transform grabPointTransform, Transform attachTransform)
+    {
+        bool onStaff = Vector3.Distance(weapon.transform.position, grabPointTransform.position) <= weapon.weaponLength / 2;
+
+        Vector3 newAttachTransformLocalPos = new Vector3(0, 0, weapon.transform.InverseTransformPoint(grabPointTransform.position).z);
+
+        bool isntPassingOtherHand = false;
+        if (attachTransform == weapon.rightAttachTransform)
+        {
+            // if hand is above before move and new pos is still above and also away enough from the other hand (to ensure no overlapping hand visuals)
+            if (attachTransform.localPosition.z > weapon.leftAttachTransform.localPosition.z
+                && newAttachTransformLocalPos.z >= weapon.leftAttachTransform.localPosition.z + grabRadius)
+            {
+                isntPassingOtherHand = true;
+            }
+            // else if hand is below before move and new pos is still below and also away enough from the other hand (to ensure no overlapping hand visuals)
+            else if (attachTransform.localPosition.z < weapon.leftAttachTransform.localPosition.z
+                     && newAttachTransformLocalPos.z <= weapon.leftAttachTransform.localPosition.z - grabRadius)
+            {
+                isntPassingOtherHand = true;
+            }
+        }
+        else // attachTransform == weapon.leftAttachTransform
+        {
+            if (attachTransform.localPosition.z > weapon.rightAttachTransform.localPosition.z
+                && newAttachTransformLocalPos.z >= weapon.rightAttachTransform.localPosition.z + grabRadius)
+            {
+                isntPassingOtherHand = true;
+            }
+            else if (attachTransform.localPosition.z < weapon.rightAttachTransform.localPosition.z
+                     && newAttachTransformLocalPos.z <= weapon.rightAttachTransform.localPosition.z - grabRadius)
+            {
+                isntPassingOtherHand = true;
+            }
+        }
+
+        if (onStaff && isntPassingOtherHand)
+        {
+            attachTransform.localPosition = newAttachTransformLocalPos;
+
+            UpdateDampers();
+        }
+    }
+
+    private void SimulateLooseGripGravity()
+    {
+
     }
 
     private void MoveWeapon()
