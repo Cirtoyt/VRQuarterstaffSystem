@@ -10,7 +10,7 @@ public class XRController : MonoBehaviour
     [Range(0, 1)] [SerializeField] private float gripBeginThreshold = 0.7f;
     [Range(0, 1)] [SerializeField] private float triggerBeginThreshold = 0.7f;
     [Range(0, 1)] [SerializeField] private float thumbstickBeginThreshold = 0.3f;
-    [Header("Debugging")]
+    [Header("Debugging (Don't change in inspector)")]
     public bool isGripActivated;
     [Range(0, 1)] public float gripValue = 0;
     public bool isTriggerActivated;

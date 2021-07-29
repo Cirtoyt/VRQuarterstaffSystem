@@ -681,6 +681,8 @@ MonoBehaviour:
   grabbableLayer:
     serializedVersion: 2
     m_Bits: 1280
+  looseGripSlipSpeed: 55
+  gripGravitySafetyBuffer: 0.04
   positionSpeed: 10000
   minPositionSpeedDamper: 0.8
   maxPositionSpeedDamper: 1
@@ -690,6 +692,7 @@ MonoBehaviour:
   minGripDistanceStrengthMultiplier: 0.72
   positionSpeedDamper: 0.89875835
   rotationSpeedDamper: 0.3273457
+  looseGripGravityForce: {x: 0, y: 0, z: 0}
   leftController: {fileID: 344734777}
   leftHand: {fileID: 1882006857}
   rightController: {fileID: 456696796}
@@ -2288,7 +2291,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 60
+      scalar: 70
       minScalar: 10
       maxCurve:
         serializedVersion: 2
@@ -7512,7 +7515,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 60
+      scalar: 70
       minScalar: 10
       maxCurve:
         serializedVersion: 2
@@ -13224,7 +13227,7 @@ MonoBehaviour:
   materialisationSpeed: 1500
   minParticleAngVec: 6.5
   maxParticleAngVec: 25
-  trailParticleAlphaMax: 0.3
+  trailParticleAlphaMax: 0.25
 --- !u!54 &7324149667657232025
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -13233,9 +13236,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7324149667657232023}
   serializedVersion: 2
-  m_Mass: 1
+  m_Mass: 3.5
   m_Drag: 0
-  m_AngularDrag: 35
+  m_AngularDrag: 50
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 1

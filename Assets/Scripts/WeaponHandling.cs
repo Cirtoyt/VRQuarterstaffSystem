@@ -15,6 +15,8 @@ public class WeaponHandling : MonoBehaviour
     public HandTypes dominantHandType;
     [Range(0.01f, 0.2f)] [SerializeField] private float grabRadius;
     [SerializeField] private LayerMask grabbableLayer;
+    [SerializeField] private float looseGripSlipSpeed;
+    [SerializeField] private float gripGravitySafetyBuffer;
     [SerializeField] private float positionSpeed;
     [Range(0.01f, 1)] [SerializeField] private float minPositionSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float maxPositionSpeedDamper;
@@ -24,9 +26,10 @@ public class WeaponHandling : MonoBehaviour
     [Space]
     [Range(0.01f, 1)] [SerializeField] private float oneHandedSpeedDamperMultiplier;
     [Range(0.01f, 1)] [SerializeField] private float minGripDistanceStrengthMultiplier;
-    [Header("Debugging")]
+    [Header("Debugging (Don't change in inspector)")]
     [Range(0.01f, 1)] [SerializeField] private float positionSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float rotationSpeedDamper;
+    [SerializeField] private Vector3 looseGripGravityForce;
     [Header("Statics")]
     [SerializeField] private XRController leftController;
     [SerializeField] private XRPhysicsHand leftHand;
@@ -62,6 +65,8 @@ public class WeaponHandling : MonoBehaviour
         gripState = GripStates.EMPTY;
         mustSetupGrips = false;
         lastRightGripValue = lastLeftGripValue = false;
+        looseGripGravityForce = Vector3.zero;
+
         rb = weapon.GetComponent<Rigidbody>();
         rb.maxAngularVelocity = 30;
 
@@ -162,73 +167,121 @@ public class WeaponHandling : MonoBehaviour
             if (rightController.isTriggerActivated && !leftController.isTriggerActivated)
             {
                 MoveGripPosition(rightHand.grabPointTransform, weapon.rightAttachTransform);
+                // No loose grip gravity when one hand has a grip still
+                looseGripGravityForce = Vector3.zero;
             }
             else if (leftController.isTriggerActivated && !rightController.isTriggerActivated)
             {
                 MoveGripPosition(leftHand.grabPointTransform, weapon.leftAttachTransform);
+                // No loose grip gravity when one hand has a grip still
+                looseGripGravityForce = Vector3.zero;
             }
             else if (rightController.isTriggerActivated && leftController.isTriggerActivated)
             {
                 SimulateLooseGripGravity();
+                MoveGripPosition(rightHand.grabPointTransform, weapon.rightAttachTransform);
+                MoveGripPosition(leftHand.grabPointTransform, weapon.leftAttachTransform);
+            }
+            else if (looseGripGravityForce != Vector3.zero) // No repositioning, no loose grip gravity, as both hands are gripping
+            {
+                looseGripGravityForce = Vector3.zero;
             }
         }
         else if (gripState == GripStates.RIGHTHANDED && rightController.isTriggerActivated)
         {
             SimulateLooseGripGravity();
+            MoveGripPosition(rightHand.grabPointTransform, weapon.rightAttachTransform, true);
         }
         else if (gripState == GripStates.LEFTHANDED && leftController.isTriggerActivated)
         {
             SimulateLooseGripGravity();
+            MoveGripPosition(leftHand.grabPointTransform, weapon.leftAttachTransform, true);
+        }
+        else if (looseGripGravityForce != Vector3.zero) // No repositioning, empty grip, so no loose grip gravity
+        {
+            looseGripGravityForce = Vector3.zero;
         }
     }
 
-    private void MoveGripPosition(Transform grabPointTransform, Transform attachTransform)
+    private void MoveGripPosition(Transform grabPointTransform, Transform attachTransform, bool ignoreOtherHandOverlapping = false)
     {
         bool onStaff = Vector3.Distance(weapon.transform.position, grabPointTransform.position) <= weapon.weaponLength / 2;
 
         Vector3 newAttachTransformLocalPos = new Vector3(0, 0, weapon.transform.InverseTransformPoint(grabPointTransform.position).z);
-
-        bool isntPassingOtherHand = false;
-        if (attachTransform == weapon.rightAttachTransform)
+        
+        if (!ignoreOtherHandOverlapping)
         {
-            // if hand is above before move and new pos is still above and also away enough from the other hand (to ensure no overlapping hand visuals)
-            if (attachTransform.localPosition.z > weapon.leftAttachTransform.localPosition.z
-                && newAttachTransformLocalPos.z >= weapon.leftAttachTransform.localPosition.z + grabRadius)
+            bool isntPassingOtherHand = false;
+            if (attachTransform == weapon.rightAttachTransform)
             {
-                isntPassingOtherHand = true;
+                // if hand is above before move and new pos is still above and also away enough from the other hand (to ensure no overlapping hand visuals)
+                if (attachTransform.localPosition.z > weapon.leftAttachTransform.localPosition.z
+                    && newAttachTransformLocalPos.z >= weapon.leftAttachTransform.localPosition.z + grabRadius)
+                {
+                    isntPassingOtherHand = true;
+                }
+                // else if hand is below before move and new pos is still below and also away enough from the other hand (to ensure no overlapping hand visuals)
+                else if (attachTransform.localPosition.z < weapon.leftAttachTransform.localPosition.z
+                         && newAttachTransformLocalPos.z <= weapon.leftAttachTransform.localPosition.z - grabRadius)
+                {
+                    isntPassingOtherHand = true;
+                }
             }
-            // else if hand is below before move and new pos is still below and also away enough from the other hand (to ensure no overlapping hand visuals)
-            else if (attachTransform.localPosition.z < weapon.leftAttachTransform.localPosition.z
-                     && newAttachTransformLocalPos.z <= weapon.leftAttachTransform.localPosition.z - grabRadius)
+            else // attachTransform == weapon.leftAttachTransform
             {
-                isntPassingOtherHand = true;
+                if (attachTransform.localPosition.z > weapon.rightAttachTransform.localPosition.z
+                    && newAttachTransformLocalPos.z >= weapon.rightAttachTransform.localPosition.z + grabRadius)
+                {
+                    isntPassingOtherHand = true;
+                }
+                else if (attachTransform.localPosition.z < weapon.rightAttachTransform.localPosition.z
+                         && newAttachTransformLocalPos.z <= weapon.rightAttachTransform.localPosition.z - grabRadius)
+                {
+                    isntPassingOtherHand = true;
+                }
+            }
+
+            if (onStaff && isntPassingOtherHand)
+            {
+                attachTransform.localPosition = newAttachTransformLocalPos;
+                UpdateDampers();
             }
         }
-        else // attachTransform == weapon.leftAttachTransform
+        else
         {
-            if (attachTransform.localPosition.z > weapon.rightAttachTransform.localPosition.z
-                && newAttachTransformLocalPos.z >= weapon.rightAttachTransform.localPosition.z + grabRadius)
+            if (onStaff)
             {
-                isntPassingOtherHand = true;
-            }
-            else if (attachTransform.localPosition.z < weapon.rightAttachTransform.localPosition.z
-                     && newAttachTransformLocalPos.z <= weapon.rightAttachTransform.localPosition.z - grabRadius)
-            {
-                isntPassingOtherHand = true;
+                attachTransform.localPosition = newAttachTransformLocalPos;
+                UpdateDampers();
             }
         }
-
-        if (onStaff && isntPassingOtherHand)
-        {
-            attachTransform.localPosition = newAttachTransformLocalPos;
-
-            UpdateDampers();
-        }
+        
     }
 
     private void SimulateLooseGripGravity()
     {
+        looseGripGravityForce = weapon.transform.forward * Vector3.Dot(weapon.transform.forward, Vector3.up) * -looseGripSlipSpeed * Time.deltaTime;
 
+        // Half speed if both hands are hald gripping
+        if (gripState == GripStates.TWOHANDED)
+            looseGripGravityForce /= 2;
+
+        bool rightHandIsWithin = Vector3.Distance(weapon.transform.position, weapon.rightAttachTransform.position) < (weapon.weaponLength / 2) - gripGravitySafetyBuffer;
+        bool leftHandIsWithin = Vector3.Distance(weapon.transform.position, weapon.leftAttachTransform.position) < (weapon.weaponLength / 2) - gripGravitySafetyBuffer;
+
+        // If hands aren't within weapon length bounds, cancel new gravity affected position & zero-out built-up gravity force
+        if (gripState == GripStates.RIGHTHANDED && !rightHandIsWithin)
+        {
+            looseGripGravityForce = Vector3.zero;
+        }
+        else if (gripState == GripStates.LEFTHANDED && !leftHandIsWithin)
+        {
+            looseGripGravityForce = Vector3.zero;
+        }
+        else if (gripState == GripStates.TWOHANDED && (!rightHandIsWithin || !leftHandIsWithin))
+        {
+            looseGripGravityForce = Vector3.zero;
+        }
     }
 
     private void MoveWeapon()
@@ -437,7 +490,7 @@ public class WeaponHandling : MonoBehaviour
     private void ProcessWeaponPhysics(Vector3 weaponTrackingPos)
     {
         // Movement
-        rb.velocity = (weaponTargetPos - weaponTrackingPos) * positionSpeed * positionSpeedDamper * Time.deltaTime;
+        rb.velocity = (weaponTargetPos - weaponTrackingPos) * positionSpeed * positionSpeedDamper * Time.deltaTime + looseGripGravityForce;
 
         // Rotation
         Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
