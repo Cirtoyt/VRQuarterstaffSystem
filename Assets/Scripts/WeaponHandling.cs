@@ -41,6 +41,7 @@ public class WeaponHandling : MonoBehaviour
         TWOHANDED,
     }
 
+    private HandTypes lastDominantHandType;
     private GripStates gripState;
     private bool mustSetupGrips;
     private bool lastRightGripValue;
@@ -57,23 +58,14 @@ public class WeaponHandling : MonoBehaviour
 
     private void Start()
     {
+        lastDominantHandType = dominantHandType;
         gripState = GripStates.EMPTY;
         mustSetupGrips = false;
         lastRightGripValue = lastLeftGripValue = false;
         rb = weapon.GetComponent<Rigidbody>();
         rb.maxAngularVelocity = 30;
 
-        switch (dominantHandType)
-        {
-            case HandTypes.RIGHT:
-                dominantController = rightController;
-                dominantHand = rightHand;
-                break;
-            case HandTypes.LEFT:
-                dominantController = leftController;
-                dominantHand = leftHand;
-                break;
-        }
+        updateDominantHand();
 
         firstGrippingHand = dominantHand;
         secondGrippingHand = (dominantHand == rightHand) ? leftHand : rightHand;
@@ -381,6 +373,14 @@ public class WeaponHandling : MonoBehaviour
 
     private void UpdateWeaponSpawnState()
     {
+        // Check if the dominant hand type has changed
+        if (dominantHandType != lastDominantHandType)
+        {
+            updateDominantHand();
+        }
+        lastDominantHandType = dominantHandType;
+
+        // Check for spawning the weapon in the dominent hand when it grips
         if (!weapon.GetPresenceState() && (dominantController.isGripActivated))
         {
             if (dominantHandType == HandTypes.RIGHT)
@@ -398,10 +398,31 @@ public class WeaponHandling : MonoBehaviour
 
             weapon.BeginMaterialising();
         }
-        // Add extra else if for when you grip again before it finishes dematerialising, not teleporting the weapon back to the start spawn position
+        // Check for despawning the weapon
         else if (weapon.GetPresenceState() && !rightController.isGripActivated && !leftController.isGripActivated)
         {
             weapon.BeginDematerialising();
+        }
+        // Add extra else if for when you grip again before it finishes dematerialising, not teleporting the weapon back to the start spawn position
+        //else if (weapon.GetPresenceState() && weapon.GetDematerialisingState()
+        //         && (rightController.isGripActivated || leftController.isGripActivated))
+        //{
+        //    weapon.BeginMaterialising();
+        //}
+    }
+
+    private void updateDominantHand()
+    {
+        switch (dominantHandType)
+        {
+            case HandTypes.RIGHT:
+                dominantController = rightController;
+                dominantHand = rightHand;
+                break;
+            case HandTypes.LEFT:
+                dominantController = leftController;
+                dominantHand = leftHand;
+                break;
         }
     }
 

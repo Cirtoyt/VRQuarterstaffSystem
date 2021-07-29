@@ -10,21 +10,28 @@ public class Weapon : MonoBehaviour
     public Transform spawnAttachTransform;
     public ParticleSystem northPS;
     public ParticleSystem southPS;
+    [SerializeField] private Material staffMat;
+    [SerializeField] private Material staffTransMat;
+    [SerializeField] private Material northTipMat;
+    [SerializeField] private Material northTipTransMat;
+    [SerializeField] private Material southTipMat;
+    [SerializeField] private Material southTipTransMat;
     public Collider[] physicsColliders;
     public MeshRenderer[] meshesRenderers;
     [Header("Variables")]
     public float weaponLength;
+    [SerializeField] private float materialisationSpeed;
     [SerializeField] private float minParticleAngVec;
     [SerializeField] private float maxParticleAngVec;
     [SerializeField] private float trailParticleAlphaMax;
 
     private Rigidbody rb;
-    private bool isPresent = false;
-    private bool isSolid = false;
-    private bool lastIsSolid = false;
-    private bool isMaterialising = false;
-    private bool isDematerialising = false;
-    private bool isColliding = false;
+    private bool isPresent;
+    private bool isSolid;
+    private bool lastIsSolid;
+    private float materialisationPerc;
+    private bool isMaterialising;
+    private bool isDematerialising;
     private Vector3 originRightAttachTransLocPos;
     private Quaternion originRightAttachTransLocRot;
     private Vector3 originLeftAttachTransLocPos;
@@ -39,9 +46,9 @@ public class Weapon : MonoBehaviour
         isPresent = false;
         isSolid = false;
         lastIsSolid = false;
+        materialisationPerc = 0;
         isMaterialising = false;
         isDematerialising = false;
-        isColliding = false;
         originRightAttachTransLocPos = rightAttachTransform.localPosition;
         originRightAttachTransLocRot = rightAttachTransform.localRotation;
         originLeftAttachTransLocPos = leftAttachTransform.localPosition;
@@ -53,7 +60,16 @@ public class Weapon : MonoBehaviour
         }
         foreach (MeshRenderer meshRenderer in meshesRenderers)
         {
-            meshRenderer.enabled = false;
+            if (meshRenderer.name == "Core Mesh" || meshRenderer.name == "90 Degree Handle")
+                meshRenderer.material = staffTransMat;
+            else if (meshRenderer.name == "North Tip Mesh")
+                meshRenderer.material = northTipTransMat;
+            else if (meshRenderer.name == "South Tip Mesh")
+                meshRenderer.material = southTipTransMat;
+
+            var colour = meshRenderer.material.color;
+            Color newColour = new Color(colour.r, colour.g, colour.b, 0);
+            meshRenderer.material.color = newColour;
         }
     }
 
@@ -62,9 +78,19 @@ public class Weapon : MonoBehaviour
         // MATERIALISATION UPDATES
         if (isMaterialising)
         {
-            // Once done materialising
-            if (true)
+            materialisationPerc += materialisationSpeed * Time.deltaTime;
+
+            foreach (MeshRenderer meshRenderer in meshesRenderers)
             {
+                var colour = meshRenderer.material.color;
+                Color newColour = new Color(colour.r, colour.g, colour.b, materialisationPerc / 100);
+                meshRenderer.material.color = newColour;
+            }
+
+            // Once done materialising
+            if (materialisationPerc >= 100)
+            {
+                materialisationPerc = 100;
                 isMaterialising = false;
                 isSolid = true;
             }
@@ -72,9 +98,19 @@ public class Weapon : MonoBehaviour
 
         if (isDematerialising)
         {
-            // Once done dematerialising
-            if (true)
+            materialisationPerc -= materialisationSpeed * Time.deltaTime;
+
+            foreach (MeshRenderer meshRenderer in meshesRenderers)
             {
+                var colour = meshRenderer.material.color;
+                Color newColour = new Color(colour.r, colour.g, colour.b, materialisationPerc / 100);
+                meshRenderer.material.color = newColour;
+            }
+
+            // Once done dematerialising
+            if (materialisationPerc <= 0)
+            {
+                materialisationPerc = 0;
                 ResetWeaponLocals();
                 northPS.Stop();
                 southPS.Stop();
@@ -83,9 +119,12 @@ public class Weapon : MonoBehaviour
                 {
                     collider.isTrigger = true;
                 }
+
                 foreach (MeshRenderer meshRenderer in meshesRenderers)
                 {
-                    meshRenderer.enabled = false;
+                    var colour = meshRenderer.material.color;
+                    Color newColour = new Color(colour.r, colour.g, colour.b, 0);
+                    meshRenderer.material.color = newColour;
                 }
 
                 isDematerialising = false;
@@ -108,7 +147,16 @@ public class Weapon : MonoBehaviour
                 }
                 foreach (MeshRenderer meshRenderer in meshesRenderers)
                 {
-                    meshRenderer.enabled = true;
+                    if (meshRenderer.name == "Core Mesh" || meshRenderer.name == "90 Degree Handle")
+                        meshRenderer.material = staffMat;
+                    else if (meshRenderer.name == "North Tip Mesh")
+                        meshRenderer.material = northTipMat;
+                    else if (meshRenderer.name == "South Tip Mesh")
+                        meshRenderer.material = southTipMat;
+
+                    var colour = meshRenderer.material.color;
+                    Color newColour = new Color(colour.r, colour.g, colour.b, 1);
+                    meshRenderer.material.color = newColour;
                 }
 
                 northPS.Play();
@@ -144,7 +192,6 @@ public class Weapon : MonoBehaviour
         southGradient.SetKeys(southGradient.colorKeys, new GradientAlphaKey[] { new GradientAlphaKey(alpha * trailParticleAlphaMax, 0), new GradientAlphaKey(0, 1) });
         var southColourOverLifetime = southPS.colorOverLifetime;
         southColourOverLifetime.color = southGradient;
-        //grad.SetKeys(new GradientColorKey[] {new GradientColorKey(Color.blue, 0.0f), new GradientColorKey(Color.red, 1.0f) }, new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(0.0f, 1.0f) });
     }
 
     public void BeginMaterialising()
@@ -156,6 +203,16 @@ public class Weapon : MonoBehaviour
 
     public void BeginDematerialising()
     {
+        foreach (MeshRenderer meshRenderer in meshesRenderers)
+        {
+            if (meshRenderer.name == "Core Mesh" || meshRenderer.name == "90 Degree Handle")
+                meshRenderer.material = staffTransMat;
+            else if (meshRenderer.name == "North Tip Mesh")
+                meshRenderer.material = northTipTransMat;
+            else if (meshRenderer.name == "South Tip Mesh")
+                meshRenderer.material = southTipTransMat;
+        }
+
         isSolid = false;
         isDematerialising = true;
         isMaterialising = false;
@@ -193,18 +250,9 @@ public class Weapon : MonoBehaviour
         leftAttachTransform.localRotation = originLeftAttachTransLocRot;
     }
 
-    public bool GetIsColliding()
+    private void OnDrawGizmos()
     {
-        return isColliding;
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        isColliding = true;
-    }
-
-    private void OnCollisionExit(Collision collision)
-    {
-        isColliding = false;
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawSphere(spawnAttachTransform.position, 0.025f);
     }
 }

@@ -221,7 +221,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &227227578
 Transform:
   m_ObjectHideFlags: 0
@@ -711,7 +711,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &515180943
 Transform:
   m_ObjectHideFlags: 0
@@ -11657,6 +11657,7 @@ Transform:
   - {fileID: 1882006855}
   - {fileID: 456696795}
   - {fileID: 831131443}
+  - {fileID: 7324149667657232022}
   m_Father: {fileID: 468447928}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -11677,7 +11678,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2048141817
 Transform:
   m_ObjectHideFlags: 0
@@ -13246,8 +13247,8 @@ Transform:
   - {fileID: 4081165973632045350}
   - {fileID: 1296306683}
   - {fileID: 1748475796}
-  m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_Father: {fileID: 1931397785}
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7324149667657232023
 GameObject:
@@ -13285,6 +13286,12 @@ MonoBehaviour:
   spawnAttachTransform: {fileID: 1672496742}
   northPS: {fileID: 1296306685}
   southPS: {fileID: 1748475798}
+  staffMat: {fileID: 2100000, guid: 666a75ae6d59a254ab80f1820e97df08, type: 2}
+  staffTransMat: {fileID: 2100000, guid: 488c6503d34e2c7489ed5fc84fa0f37e, type: 2}
+  northTipMat: {fileID: 2100000, guid: 83bcd362414ad224c960ad9a9672dff8, type: 2}
+  northTipTransMat: {fileID: 2100000, guid: 02781dcfbe1092a4ab1ddbf46716e8e5, type: 2}
+  southTipMat: {fileID: 2100000, guid: d72603e96eedd004a85d4bc2210f1796, type: 2}
+  southTipTransMat: {fileID: 2100000, guid: 25bd15dd5e03f2340af7683e3c137290, type: 2}
   physicsColliders:
   - {fileID: 4354398662000977824}
   meshesRenderers:
@@ -13295,7 +13302,9 @@ MonoBehaviour:
   - {fileID: 515180945}
   - {fileID: 227227580}
   - {fileID: 2048141818}
+  - {fileID: 1392745213}
   weaponLength: 1.7
+  materialisationSpeed: 1500
   minParticleAngVec: 6.5
   maxParticleAngVec: 25
   trailParticleAlphaMax: 0.3
