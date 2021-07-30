@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class XRHandVisuals : MonoBehaviour
+public class XRHandVisual : MonoBehaviour
 {
     [Header("Variables")]
     [SerializeField] private GameObject handModel;

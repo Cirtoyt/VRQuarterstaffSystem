@@ -10,7 +10,7 @@ public class XRPhysicsHand : MonoBehaviour
     [SerializeField] private float positionSpeed = 20;
     [Range(0.01f,1)][SerializeField] private float rotationSpeedDamper = 100;
     [Header("Statics")]
-    public XRHandVisuals handVisuals;
+    public XRHandVisual handVisual;
 
     [HideInInspector] public bool enablePhysics;
     [HideInInspector] public Rigidbody rb;
