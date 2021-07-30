@@ -167,10 +167,8 @@ public class Weapon : MonoBehaviour
                 // Do stuff when the weapon starts to become non-solid e.g. particle effect
             }
         }
-    }
 
-    private void FixedUpdate()
-    {
+        // VISUAL UPDATES
         float alpha = 0;
         if (rb.angularVelocity.magnitude >= minParticleAngVec && rb.angularVelocity.magnitude <= maxParticleAngVec)
         {

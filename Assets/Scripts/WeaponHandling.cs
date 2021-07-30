@@ -58,6 +58,7 @@ public class WeaponHandling : MonoBehaviour
     private Quaternion weaponTargetRot;
     private bool weaponIsFacingThumb;
     private bool secondHandGrippingAboveFirst;
+    private Vector3 rotationUp;
 
     private void Start()
     {
@@ -94,6 +95,7 @@ public class WeaponHandling : MonoBehaviour
         }
         else
         {
+            // Teleport invisible weapon constantly to hand
             weapon.transform.position = dominantHand.grabPointTransform.position;
             weapon.transform.rotation = dominantHand.grabPointTransform.rotation;
         }
@@ -124,7 +126,9 @@ public class WeaponHandling : MonoBehaviour
             }
 
             // ## EMPTY GRIP MODE ##
-            else if (!rightController.isGripActivated && !leftController.isGripActivated)
+            else if (!rightController.isGripActivated && !leftController.isGripActivated
+                     || rightController.isGripActivated && !IsWithinGrabRange(rightHand) && !leftController.isGripActivated
+                     || leftController.isGripActivated && !IsWithinGrabRange(leftHand) && !rightController.isGripActivated)
             {
                 UpdateGripState(GripStates.EMPTY);
                 rightHand.enablePhysics = true;
@@ -231,9 +235,10 @@ public class WeaponHandling : MonoBehaviour
             SimulateLooseGripGravity();
             MoveGripPosition(leftHand.grabPointTransform, weapon.leftAttachTransform, true);
         }
-        else if (looseGripGravityForce != Vector3.zero) // No repositioning, empty grip, so no loose grip gravity
+        else // No repositioning, empty grip, so no loose grip gravity
         {
             looseGripGravityForce = Vector3.zero;
+            rotationUp = (rightHand.handVisuals.transform.up + leftHand.handVisuals.transform.up).normalized;
         }
     }
 
@@ -321,6 +326,15 @@ public class WeaponHandling : MonoBehaviour
         else // don't set new gravity affected position & zero-out built-up gravity force
         {
             looseGripGravityForce = Vector3.zero;
+        }
+    }
+
+    private void UpdateVisualHands()
+    {
+        if (rightController.isGripActivated)
+        {
+            rightHand.handVisuals.transform.SetParent(weapon.transform);
+            rightHand.handVisuals.transform.position = weapon.rightAttachTransform.position;
         }
     }
 
@@ -556,9 +570,9 @@ public class WeaponHandling : MonoBehaviour
         lastDominantHandType = dominantHandType;
 
         // Check for spawning the weapon in the dominent hand when it grips
-        if (!weapon.GetPresenceState() && (dominantController.isGripActivated))
+        if (!weapon.GetPresenceState() && dominantController.isGripActivated && !lastRightGripValue && !lastLeftGripValue)
         {
-            if (dominantHandType == HandTypes.RIGHT)
+            if (dominantHandType == HandTypes.RIGHT )
             {
                 weapon.transform.rotation = rightHand.grabPointTransform.rotation;
                 weapon.transform.position = rightHand.grabPointTransform.position + (weapon.transform.position - weapon.spawnAttachTransform.position);
@@ -574,16 +588,12 @@ public class WeaponHandling : MonoBehaviour
             weapon.BeginMaterialising();
         }
         // Check for despawning the weapon
-        else if (weapon.GetPresenceState() && !rightController.isGripActivated && !leftController.isGripActivated)
+        else if (weapon.GetPresenceState() && gripState == GripStates.RIGHTHANDED && !rightController.isGripActivated
+                 || weapon.GetPresenceState() && gripState == GripStates.LEFTHANDED && !leftController.isGripActivated
+                 || weapon.GetPresenceState() && gripState == GripStates.TWOHANDED && !rightController.isGripActivated && !leftController.isGripActivated)
         {
             weapon.BeginDematerialising();
         }
-        // Add extra else if for when you grip again before it finishes dematerialising, not teleporting the weapon back to the start spawn position
-        //else if (weapon.GetPresenceState() && weapon.GetDematerialisingState()
-        //         && (rightController.isGripActivated || leftController.isGripActivated))
-        //{
-        //    weapon.BeginMaterialising();
-        //}
     }
 
     private void updateDominantHand()
