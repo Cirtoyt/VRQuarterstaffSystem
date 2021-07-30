@@ -16,7 +16,7 @@ public class WeaponHandling : MonoBehaviour
     [Range(0.01f, 0.2f)] [SerializeField] private float grabRadius;
     [SerializeField] private LayerMask grabbableLayer;
     [SerializeField] private float looseGripSlipSpeed;
-    [SerializeField] private float gripGravitySafetyBuffer;
+    [Range(0.01f, 1)] [SerializeField] private float looseGripTwoHandedMultiplier;
     [SerializeField] private float positionSpeed;
     [Range(0.01f, 1)] [SerializeField] private float minPositionSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float maxPositionSpeedDamper;
@@ -99,11 +99,6 @@ public class WeaponHandling : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        //Doing movement in fixed update is just less fluid due to movement being setting position and rotation values to hands which update in regular Update in real time
-    }
-
     private void CheckGripChanges()
     {
         if (lastRightGripValue != rightController.isGripActivated
@@ -111,19 +106,19 @@ public class WeaponHandling : MonoBehaviour
         {
             // ## ONE-HANDED MODE ##
             if ((rightController.isGripActivated && !leftController.isGripActivated && IsWithinGrabRange(rightHand))
-                || (rightController.isGripActivated && leftController.isGripActivated && IsWithinGrabRange(rightHand) && !IsWithinGrabRange(leftHand)))
+                || (rightController.isGripActivated && leftController.isGripActivated && IsWithinGrabRange(rightHand) && !IsWithinGrabRange(leftHand) && !lastLeftGripValue))
             {
                 UpdateGripState(GripStates.RIGHTHANDED);
             }
             else if ((leftController.isGripActivated && !rightController.isGripActivated && IsWithinGrabRange(leftHand))
-                     || (leftController.isGripActivated && rightController.isGripActivated && IsWithinGrabRange(leftHand) && !IsWithinGrabRange(rightHand)))
+                     || (leftController.isGripActivated && rightController.isGripActivated && IsWithinGrabRange(leftHand) && !IsWithinGrabRange(rightHand) && !lastRightGripValue))
             {
                 UpdateGripState(GripStates.LEFTHANDED);
             }
 
             // ## TWO-HANDED MODE ##
             else if (rightController.isGripActivated && leftController.isGripActivated
-                     && IsWithinGrabRange(rightHand) && IsWithinGrabRange(leftHand))
+                     && IsWithinGrabRange(rightHand, true) && IsWithinGrabRange(leftHand, true))
             {
                 UpdateGripState(GripStates.TWOHANDED);
             }
@@ -144,12 +139,51 @@ public class WeaponHandling : MonoBehaviour
         }
     }
 
-    private bool IsWithinGrabRange(XRPhysicsHand grabbingHand)
+    private bool IsWithinGrabRange(XRPhysicsHand grabbingHand, bool enteringTwoHandedMode = false)
     {
-        bool overlapping = Physics.CheckSphere(grabbingHand.grabPointTransform.position, grabRadius, grabbableLayer, QueryTriggerInteraction.Collide);
-        bool onStaff = Vector3.Distance(weapon.transform.position, grabbingHand.grabPointTransform.position) <= weapon.weaponLength / 2;
-
-        return overlapping && onStaff;
+        if (gripState == GripStates.TWOHANDED)
+        {
+            if (grabbingHand == rightHand)
+            {
+                return Vector3.Distance(weapon.transform.position, weapon.rightAttachTransform.position) <= weapon.weaponLength / 2;
+            }
+            else
+            {
+                return Vector3.Distance(weapon.transform.position, weapon.leftAttachTransform.position) <= weapon.weaponLength / 2;
+            }
+        }
+        else if (gripState == GripStates.RIGHTHANDED && enteringTwoHandedMode)
+        {
+            if (grabbingHand == rightHand)
+            {
+                return Vector3.Distance(weapon.transform.position, weapon.rightAttachTransform.position) <= weapon.weaponLength / 2;
+            }
+            else
+            {
+                bool overlapping = Physics.CheckSphere(grabbingHand.grabPointTransform.position, grabRadius, grabbableLayer, QueryTriggerInteraction.Collide);
+                bool onStaff = Vector3.Distance(weapon.transform.position, grabbingHand.grabPointTransform.position) <= weapon.weaponLength / 2;
+                return overlapping && onStaff;
+            }
+        }
+        else if (gripState == GripStates.LEFTHANDED && enteringTwoHandedMode)
+        {
+            if (grabbingHand == leftHand)
+            {
+                return Vector3.Distance(weapon.transform.position, weapon.leftAttachTransform.position) <= weapon.weaponLength / 2;
+            }
+            else
+            {
+                bool overlapping = Physics.CheckSphere(grabbingHand.grabPointTransform.position, grabRadius, grabbableLayer, QueryTriggerInteraction.Collide);
+                bool onStaff = Vector3.Distance(weapon.transform.position, grabbingHand.grabPointTransform.position) <= weapon.weaponLength / 2;
+                return overlapping && onStaff;
+            }
+        }
+        else
+        {
+            bool overlapping = Physics.CheckSphere(grabbingHand.grabPointTransform.position, grabRadius, grabbableLayer, QueryTriggerInteraction.Collide);
+            bool onStaff = Vector3.Distance(weapon.transform.position, grabbingHand.grabPointTransform.position) <= weapon.weaponLength / 2;
+            return overlapping && onStaff;
+        }
     }
 
     private void UpdateGripState(GripStates newState)
@@ -264,21 +298,27 @@ public class WeaponHandling : MonoBehaviour
 
         // Half speed if both hands are hald gripping
         if (gripState == GripStates.TWOHANDED)
-            looseGripGravityForce /= 2;
+            looseGripGravityForce *= looseGripTwoHandedMultiplier;
 
-        bool rightHandIsWithin = Vector3.Distance(weapon.transform.position, weapon.rightAttachTransform.position) < (weapon.weaponLength / 2) - gripGravitySafetyBuffer;
-        bool leftHandIsWithin = Vector3.Distance(weapon.transform.position, weapon.leftAttachTransform.position) < (weapon.weaponLength / 2) - gripGravitySafetyBuffer;
+        Vector3 newPos = weapon.transform.position + looseGripGravityForce;
 
-        // If hands aren't within weapon length bounds, cancel new gravity affected position & zero-out built-up gravity force
-        if (gripState == GripStates.RIGHTHANDED && !rightHandIsWithin)
+        bool rightHandIsWithin = Vector3.Distance(newPos, weapon.rightAttachTransform.position) <= weapon.weaponLength / 2;
+        bool leftHandIsWithin = Vector3.Distance(newPos, weapon.leftAttachTransform.position) <= weapon.weaponLength / 2;
+
+        // If hands aren within weapon length bounds, update weapon position
+        if (gripState == GripStates.RIGHTHANDED && rightHandIsWithin)
         {
-            looseGripGravityForce = Vector3.zero;
+            weapon.transform.position = newPos;
         }
-        else if (gripState == GripStates.LEFTHANDED && !leftHandIsWithin)
+        else if (gripState == GripStates.LEFTHANDED && leftHandIsWithin)
         {
-            looseGripGravityForce = Vector3.zero;
+            weapon.transform.position = newPos;
         }
-        else if (gripState == GripStates.TWOHANDED && (!rightHandIsWithin || !leftHandIsWithin))
+        else if (gripState == GripStates.TWOHANDED && rightHandIsWithin && leftHandIsWithin)
+        {
+            weapon.transform.position = newPos;
+        }
+        else // don't set new gravity affected position & zero-out built-up gravity force
         {
             looseGripGravityForce = Vector3.zero;
         }
@@ -490,7 +530,7 @@ public class WeaponHandling : MonoBehaviour
     private void ProcessWeaponPhysics(Vector3 weaponTrackingPos)
     {
         // Movement
-        rb.velocity = (weaponTargetPos - weaponTrackingPos) * positionSpeed * positionSpeedDamper * Time.deltaTime + looseGripGravityForce;
+        rb.velocity = (weaponTargetPos - weaponTrackingPos) * positionSpeed * positionSpeedDamper * Time.deltaTime;
 
         // Rotation
         Quaternion rotDifference = weaponTargetRot * Quaternion.Inverse(weapon.transform.rotation);
