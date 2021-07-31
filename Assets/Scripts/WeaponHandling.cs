@@ -10,28 +10,35 @@ public class WeaponHandling : MonoBehaviour
         LEFT,
     }
 
-    [Header("Options")]
-    public Weapon weapon;
+    [Header("Grabbing Options")]
     public HandTypes dominantHandType;
     [Range(0.01f, 0.2f)] [SerializeField] private float grabRadius;
     [SerializeField] private LayerMask grabbableLayer;
+    [Header("Loose Grip Options")]
     [SerializeField] private float looseGripSlipSpeed;
     [Range(0.01f, 1)] [SerializeField] private float looseGripTwoHandedMultiplier;
-    [SerializeField] private float handVisualMinEndCapDepth;
+    [Header("Movement Options")]
     [SerializeField] private float positionSpeed;
     [Range(0.01f, 1)] [SerializeField] private float minPositionSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float maxPositionSpeedDamper;
-    //[SerializeField] private float rotationSpeed = 8000;
     [Range(0.01f, 1)] [SerializeField] private float minRotationSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float maxRotationSpeedDamper;
     [Space]
     [Range(0.01f, 1)] [SerializeField] private float oneHandedSpeedDamperMultiplier;
     [Range(0.01f, 1)] [SerializeField] private float minGripDistanceStrengthMultiplier;
+    [Header("Hand Visuals Options")]
+    [SerializeField] private float handVisualMinEndCapDepth;
+    [SerializeField] private Vector3 handVisualPositionOffset;
+    [SerializeField] private Vector3 handVisualEulerRotationOffset;
+    [SerializeField] private Vector3 handVisualStaffEndEulerRotationOffset;
+    
     [Header("Debugging (Don't change in inspector)")]
     [Range(0.01f, 1)] [SerializeField] private float positionSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float rotationSpeedDamper;
     [SerializeField] private Vector3 looseGripGravityForce;
+    
     [Header("Statics")]
+    public Weapon weapon;
     [SerializeField] private XRController leftController;
     [SerializeField] private XRPhysicsHand leftHand;
     [SerializeField] private XRController rightController;
@@ -89,9 +96,6 @@ public class WeaponHandling : MonoBehaviour
         // ## GRIP REPOSITIONING ##
         GripRepositioning();
 
-        // ## HAND VISUALS ##
-        UpdateVisualHands();
-
         // ## WEAPON MOVEMENT ##
         if (weapon.GetPresenceState())
         {
@@ -103,6 +107,9 @@ public class WeaponHandling : MonoBehaviour
             weapon.transform.position = dominantHand.grabPointTransform.position;
             weapon.transform.rotation = dominantHand.grabPointTransform.rotation;
         }
+
+        // ## HAND VISUALS ##
+        UpdateVisualHands();
     }
 
     private void CheckGripChanges()
@@ -335,75 +342,93 @@ public class WeaponHandling : MonoBehaviour
 
     private void UpdateVisualHands()
     {
-        if (rightController.isGripActivated)
-        {
-            // Position
-            rightHand.handVisual.transform.position = weapon.rightAttachTransform.position;
+        Vector3 rightPositionOffset = handVisualPositionOffset;
+        Vector3 leftPositionOffset = new Vector3(-handVisualPositionOffset.x, handVisualPositionOffset.y, handVisualPositionOffset.z);
+        Quaternion rotationOffset = Quaternion.Euler(handVisualEulerRotationOffset.x, handVisualEulerRotationOffset.y, handVisualEulerRotationOffset.z);
+        Quaternion rightStickEndRotationOffset = Quaternion.Euler(handVisualStaffEndEulerRotationOffset.x, handVisualStaffEndEulerRotationOffset.y, handVisualStaffEndEulerRotationOffset.z);
+        Quaternion leftStickEndRotationOffset = Quaternion.Euler(handVisualStaffEndEulerRotationOffset.x, -handVisualStaffEndEulerRotationOffset.y, handVisualStaffEndEulerRotationOffset.z);
 
-            // Rotation
+        if (rightController.isGripActivated && (gripState == GripStates.RIGHTHANDED || gripState == GripStates.TWOHANDED))
+        {
+            // Right Position
+            rightHand.handVisual.transform.position = weapon.rightAttachTransform.position;
+            rightHand.handVisualModel.localPosition = rightPositionOffset;
+
+            // Right Rotation
             Quaternion newRotation;
+            // If on stick end
             if (Vector3.Distance(weapon.transform.position, weapon.rightAttachTransform.position) >= weapon.weaponLength / 2 - handVisualMinEndCapDepth)
             {
+                // If at north end or south end
                 Vector3 handGripDirection = weapon.rightAttachTransform.position - weapon.transform.position;
                 if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
                 {
-                    newRotation = Quaternion.LookRotation(rightHand.grabPointTransform.up, weapon.transform.forward);
+                    newRotation = Quaternion.LookRotation(weapon.transform.forward, rightHand.grabPointTransform.up) * rightStickEndRotationOffset;
                 }
                 else
                 {
-                    newRotation = Quaternion.LookRotation(rightHand.grabPointTransform.up, -weapon.transform.forward);
+                    newRotation = Quaternion.LookRotation(-weapon.transform.forward, rightHand.grabPointTransform.up) * rightStickEndRotationOffset;
                 }
             }
+            // If thumb is facing north
             else if (Vector3.Dot(rightHand.grabPointTransform.forward, weapon.transform.forward) >= 0)
             {
-                newRotation = Quaternion.LookRotation(weapon.transform.forward, rightHand.grabPointTransform.up);
+                newRotation = Quaternion.LookRotation(weapon.transform.forward, rightHand.grabPointTransform.up) * rotationOffset;
             }
+            // If thumb is facing south
             else
             {
-                newRotation = Quaternion.LookRotation(-weapon.transform.forward, rightHand.grabPointTransform.up);
+                newRotation = Quaternion.LookRotation(-weapon.transform.forward, rightHand.grabPointTransform.up) * rotationOffset;
             }
 
             rightHand.handVisual.transform.rotation = Quaternion.RotateTowards(rightHand.handVisual.transform.rotation, newRotation, float.PositiveInfinity);
         }
-        else
+        else if (rightHand.handVisual.transform.localPosition != Vector3.zero || rightHand.handVisual.transform.localRotation != Quaternion.identity)
         {
             rightHand.handVisual.transform.localPosition = Vector3.zero;
+            rightHand.ResetHandVisualModelLocalPosition();
             rightHand.handVisual.transform.localRotation = Quaternion.identity;
         }
 
-        if (leftController.isGripActivated)
+        if (leftController.isGripActivated && (gripState == GripStates.LEFTHANDED || gripState == GripStates.TWOHANDED))
         {
-            // Position
+            // Left Position
             leftHand.handVisual.transform.position = weapon.leftAttachTransform.position;
+            leftHand.handVisualModel.localPosition = leftPositionOffset;
 
-            // Rotation
+            // Left Rotation
             Quaternion newRotation;
+            // If on stick end
             if (Vector3.Distance(weapon.transform.position, weapon.leftAttachTransform.position) >= weapon.weaponLength / 2 - handVisualMinEndCapDepth)
             {
+                // If at north end or south end
                 Vector3 handGripDirection = weapon.leftAttachTransform.position - weapon.transform.position;
                 if (weapon.transform.InverseTransformDirection(handGripDirection).z >= 0)
                 {
-                    newRotation = Quaternion.LookRotation(leftHand.grabPointTransform.up, weapon.transform.forward);
+                    newRotation = Quaternion.LookRotation(weapon.transform.forward, leftHand.grabPointTransform.up) * leftStickEndRotationOffset;
                 }
                 else
                 {
-                    newRotation = Quaternion.LookRotation(leftHand.grabPointTransform.up, -weapon.transform.forward);
+                    newRotation = Quaternion.LookRotation(-weapon.transform.forward, leftHand.grabPointTransform.up) * leftStickEndRotationOffset;
                 }
             }
+            // If thumb is facing north
             else if (Vector3.Dot(leftHand.grabPointTransform.forward, weapon.transform.forward) >= 0)
             {
-                newRotation = Quaternion.LookRotation(weapon.transform.forward, leftHand.grabPointTransform.up);
+                newRotation = Quaternion.LookRotation(weapon.transform.forward, leftHand.grabPointTransform.up) * rotationOffset;
             }
+            // If thumb is facing south
             else
             {
-                newRotation = Quaternion.LookRotation(-weapon.transform.forward, leftHand.grabPointTransform.up);
+                newRotation = Quaternion.LookRotation(-weapon.transform.forward, leftHand.grabPointTransform.up) * rotationOffset;
             }
 
             leftHand.handVisual.transform.rotation = Quaternion.RotateTowards(leftHand.handVisual.transform.rotation, newRotation, float.PositiveInfinity);
         }
-        else
+        else if (leftHand.handVisual.transform.localPosition != Vector3.zero || leftHand.handVisual.transform.localRotation != Quaternion.identity)
         {
             leftHand.handVisual.transform.localPosition = Vector3.zero;
+            leftHand.ResetHandVisualModelLocalPosition();
             leftHand.handVisual.transform.localRotation = Quaternion.identity;
         }
     }

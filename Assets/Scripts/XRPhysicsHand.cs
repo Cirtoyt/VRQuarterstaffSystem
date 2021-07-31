@@ -11,16 +11,19 @@ public class XRPhysicsHand : MonoBehaviour
     [Range(0.01f,1)][SerializeField] private float rotationSpeedDamper = 100;
     [Header("Statics")]
     public XRHandVisual handVisual;
+    public Transform handVisualModel;
 
     [HideInInspector] public bool enablePhysics;
     [HideInInspector] public Rigidbody rb;
 
+    private Vector3 originHandVisualModelLocalPosition;
+
     private void Start()
     {
+        enablePhysics = true;
         rb = GetComponent<Rigidbody>();
         rb.maxAngularVelocity = 30;
-
-        enablePhysics = true;
+        originHandVisualModelLocalPosition = handVisualModel.localPosition;
 
         transform.position = parentController.transform.position;
         transform.rotation = parentController.transform.rotation;
@@ -39,5 +42,10 @@ public class XRPhysicsHand : MonoBehaviour
 
             rb.angularVelocity = (0.9f * rotationSpeedDamper * Mathf.Deg2Rad * angleInDegrees / Time.deltaTime) * rotationAxis.normalized;
         }
+    }
+
+    public void ResetHandVisualModelLocalPosition()
+    {
+        handVisualModel.localPosition = originHandVisualModelLocalPosition;
     }
 }

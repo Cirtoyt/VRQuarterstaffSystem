@@ -675,7 +675,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32461b65ee77a4b4c848373cc198043b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weapon: {fileID: 7324149667657232024}
   dominantHandType: 0
   grabRadius: 0.0659
   grabbableLayer:
@@ -683,7 +682,6 @@ MonoBehaviour:
     m_Bits: 1280
   looseGripSlipSpeed: 0.48
   looseGripTwoHandedMultiplier: 0.7
-  handVisualMinEndCapDepth: 0.012
   positionSpeed: 10000
   minPositionSpeedDamper: 0.8
   maxPositionSpeedDamper: 1
@@ -691,9 +689,14 @@ MonoBehaviour:
   maxRotationSpeedDamper: 0.503
   oneHandedSpeedDamperMultiplier: 0.6
   minGripDistanceStrengthMultiplier: 0.72
-  positionSpeedDamper: 0.89875835
-  rotationSpeedDamper: 0.3273457
+  handVisualMinEndCapDepth: 0.022
+  handVisualPositionOffset: {x: -0.023, y: 0.023, z: 0}
+  handVisualEulerRotationOffset: {x: 73, y: 0, z: 0}
+  handVisualStaffEndEulerRotationOffset: {x: 70, y: -85, z: 0}
+  positionSpeedDamper: 0.8671322
+  rotationSpeedDamper: 0.27247432
   looseGripGravityForce: {x: 0, y: 0, z: 0}
+  weapon: {fileID: 7324149667657232024}
   leftController: {fileID: 344734777}
   leftHand: {fileID: 1882006857}
   rightController: {fileID: 456696796}
@@ -1328,6 +1331,7 @@ MonoBehaviour:
   positionSpeed: 2500
   rotationSpeedDamper: 0.41
   handVisual: {fileID: 1569001385}
+  handVisualModel: {fileID: 1613510587}
   enablePhysics: 0
   rb: {fileID: 0}
 --- !u!1 &925276024
@@ -2292,7 +2296,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 70
+      scalar: 80
       minScalar: 10
       maxCurve:
         serializedVersion: 2
@@ -7516,7 +7520,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 70
+      scalar: 80
       minScalar: 10
       maxCurve:
         serializedVersion: 2
@@ -11545,6 +11549,7 @@ MonoBehaviour:
   positionSpeed: 2500
   rotationSpeedDamper: 0.41
   handVisual: {fileID: 726892700}
+  handVisualModel: {fileID: 6566646497209416651}
   enablePhysics: 0
   rb: {fileID: 0}
 --- !u!1 &1882210225
@@ -13226,9 +13231,9 @@ MonoBehaviour:
   - {fileID: 1392745213}
   weaponLength: 1.7
   materialisationSpeed: 1500
-  minParticleAngVec: 6.5
+  minParticleAngVec: 2.5
   maxParticleAngVec: 25
-  trailParticleAlphaMax: 0.25
+  trailParticleAlphaMax: 0.3
 --- !u!54 &7324149667657232025
 Rigidbody:
   m_ObjectHideFlags: 0
