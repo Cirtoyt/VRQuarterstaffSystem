@@ -4,13 +4,13 @@ using UnityEngine;
 
 public class XRRig : MonoBehaviour
 {
-    public GameObject cameraGameObject;
+    public Transform cameraTrans;
     public Vector3 cameraPosInRigSpace;
     public float cameraHeightInRigSpace;
     
     void Update()
     {
-        cameraPosInRigSpace = transform.InverseTransformPoint(cameraGameObject.transform.position);
+        cameraPosInRigSpace = transform.InverseTransformPoint(cameraTrans.transform.position);
         cameraHeightInRigSpace = cameraPosInRigSpace.y;
     }
 }

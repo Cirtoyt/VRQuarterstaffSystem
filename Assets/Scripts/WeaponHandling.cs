@@ -66,7 +66,7 @@ public class WeaponHandling : MonoBehaviour
     private Quaternion weaponTargetRot;
     private bool weaponIsFacingThumb;
     private bool secondHandGrippingAboveFirst;
-    private Vector3 rotationUp;
+    private Vector3 weaponRotationUp;
 
     private void Start()
     {
@@ -75,7 +75,6 @@ public class WeaponHandling : MonoBehaviour
         mustSetupGrips = false;
         lastRightGripValue = lastLeftGripValue = false;
         looseGripGravityForce = Vector3.zero;
-
         rb = weapon.GetComponent<Rigidbody>();
         rb.maxAngularVelocity = 30;
 
@@ -110,6 +109,57 @@ public class WeaponHandling : MonoBehaviour
 
         // ## HAND VISUALS ##
         UpdateVisualHands();
+    }
+
+    private void UpdateWeaponSpawnState()
+    {
+        // Check if the dominant hand type has changed
+        if (dominantHandType != lastDominantHandType)
+        {
+            UpdateDominantHand();
+        }
+        lastDominantHandType = dominantHandType;
+
+        // Check for spawning the weapon in the dominent hand when it grips
+        if (!weapon.GetPresenceState() && dominantController.isGripActivated && !lastRightGripValue && !lastLeftGripValue)
+        {
+            if (dominantHandType == HandTypes.RIGHT)
+            {
+                weapon.transform.rotation = rightHand.grabPointTransform.rotation;
+                weapon.transform.position = rightHand.grabPointTransform.position + (weapon.transform.position - weapon.spawnAttachTransform.position);
+                weapon.rightAttachTransform.position = weapon.spawnAttachTransform.position;
+            }
+            else
+            {
+                weapon.transform.rotation = leftHand.grabPointTransform.rotation;
+                weapon.transform.position = leftHand.grabPointTransform.position + (weapon.transform.position - weapon.spawnAttachTransform.position);
+                weapon.leftAttachTransform.position = weapon.spawnAttachTransform.position;
+            }
+
+            weapon.BeginMaterialising();
+        }
+        // Check for despawning the weapon
+        else if (weapon.GetPresenceState() && gripState == GripStates.RIGHTHANDED && !rightController.isGripActivated
+                 || weapon.GetPresenceState() && gripState == GripStates.LEFTHANDED && !leftController.isGripActivated
+                 || weapon.GetPresenceState() && gripState == GripStates.TWOHANDED && !rightController.isGripActivated && !leftController.isGripActivated)
+        {
+            weapon.BeginDematerialising();
+        }
+    }
+
+    private void UpdateDominantHand()
+    {
+        switch (dominantHandType)
+        {
+            case HandTypes.RIGHT:
+                dominantController = rightController;
+                dominantHand = rightHand;
+                break;
+            case HandTypes.LEFT:
+                dominantController = leftController;
+                dominantHand = leftHand;
+                break;
+        }
     }
 
     private void CheckGripChanges()
@@ -249,7 +299,7 @@ public class WeaponHandling : MonoBehaviour
         else // No repositioning, empty grip, so no loose grip gravity
         {
             looseGripGravityForce = Vector3.zero;
-            rotationUp = (rightHand.handVisual.transform.up + leftHand.handVisual.transform.up).normalized;
+            weaponRotationUp = (rightHand.handVisual.transform.up + leftHand.handVisual.transform.up).normalized;
         }
     }
 
@@ -258,6 +308,7 @@ public class WeaponHandling : MonoBehaviour
         bool onStaff = Vector3.Distance(weapon.transform.position, grabPointTransform.position) <= weapon.weaponLength / 2;
 
         Vector3 newAttachTransformLocalPos = new Vector3(0, 0, weapon.transform.InverseTransformPoint(grabPointTransform.position).z);
+        float weaponWorldUpDot = Vector3.Dot(weapon.transform.forward, Vector3.up);
         
         if (!ignoreOtherHandOverlapping)
         {
@@ -293,7 +344,8 @@ public class WeaponHandling : MonoBehaviour
 
             if (onStaff && isntPassingOtherHand)
             {
-                attachTransform.localPosition = newAttachTransformLocalPos;
+                // Lerp prevents moving the attach transfrom along the pole is the staff is horizontal with world to simulate realistic friction
+                attachTransform.localPosition = Vector3.Lerp(attachTransform.localPosition, newAttachTransformLocalPos, Mathf.Abs(weaponWorldUpDot));
                 UpdateDampers();
             }
         }
@@ -301,7 +353,8 @@ public class WeaponHandling : MonoBehaviour
         {
             if (onStaff)
             {
-                attachTransform.localPosition = newAttachTransformLocalPos;
+                // Lerp prevents moving the attach transfrom along the pole is the staff is horizontal with world to simulate realistic friction
+                attachTransform.localPosition = Vector3.Lerp(attachTransform.localPosition, newAttachTransformLocalPos, Mathf.Abs(weaponWorldUpDot));
                 UpdateDampers();
             }
         }
@@ -653,57 +706,6 @@ public class WeaponHandling : MonoBehaviour
             angleInDegrees -= 360;
 
         rb.angularVelocity = (0.9f * rotationSpeedDamper * Mathf.Deg2Rad * angleInDegrees / Time.deltaTime) * rotationAxis.normalized;
-    }
-
-    private void UpdateWeaponSpawnState()
-    {
-        // Check if the dominant hand type has changed
-        if (dominantHandType != lastDominantHandType)
-        {
-            UpdateDominantHand();
-        }
-        lastDominantHandType = dominantHandType;
-
-        // Check for spawning the weapon in the dominent hand when it grips
-        if (!weapon.GetPresenceState() && dominantController.isGripActivated && !lastRightGripValue && !lastLeftGripValue)
-        {
-            if (dominantHandType == HandTypes.RIGHT )
-            {
-                weapon.transform.rotation = rightHand.grabPointTransform.rotation;
-                weapon.transform.position = rightHand.grabPointTransform.position + (weapon.transform.position - weapon.spawnAttachTransform.position);
-                weapon.rightAttachTransform.position = weapon.spawnAttachTransform.position;
-            }
-            else
-            {
-                weapon.transform.rotation = leftHand.grabPointTransform.rotation;
-                weapon.transform.position = leftHand.grabPointTransform.position + (weapon.transform.position - weapon.spawnAttachTransform.position);
-                weapon.leftAttachTransform.position = weapon.spawnAttachTransform.position;
-            }
-
-            weapon.BeginMaterialising();
-        }
-        // Check for despawning the weapon
-        else if (weapon.GetPresenceState() && gripState == GripStates.RIGHTHANDED && !rightController.isGripActivated
-                 || weapon.GetPresenceState() && gripState == GripStates.LEFTHANDED && !leftController.isGripActivated
-                 || weapon.GetPresenceState() && gripState == GripStates.TWOHANDED && !rightController.isGripActivated && !leftController.isGripActivated)
-        {
-            weapon.BeginDematerialising();
-        }
-    }
-
-    private void UpdateDominantHand()
-    {
-        switch (dominantHandType)
-        {
-            case HandTypes.RIGHT:
-                dominantController = rightController;
-                dominantHand = rightHand;
-                break;
-            case HandTypes.LEFT:
-                dominantController = leftController;
-                dominantHand = leftHand;
-                break;
-        }
     }
 
     private void OnDrawGizmos()

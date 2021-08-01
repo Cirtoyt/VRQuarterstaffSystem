@@ -608,7 +608,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e62835f35b4f72c49b00fdf0292d4ac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraGameObject: {fileID: 1687258581}
+  cameraTrans: {fileID: 1687258585}
   cameraPosInRigSpace: {x: 0, y: 0, z: 0}
   cameraHeightInRigSpace: 0
 --- !u!4 &468447928
@@ -680,6 +680,7 @@ MonoBehaviour:
   grabbableLayer:
     serializedVersion: 2
     m_Bits: 1280
+  handForwardAngleMultiplier: 1
   looseGripSlipSpeed: 0.48
   looseGripTwoHandedMultiplier: 0.7
   positionSpeed: 10000

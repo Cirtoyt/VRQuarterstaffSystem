@@ -13,14 +13,14 @@ public class ContinuousMovement : MonoBehaviour
     [SerializeField] private float additionalHeight;
 
     private CharacterController characterCtrlr;
-    private XRRig rig;
+    private XRRig xrRig;
 
     private float fallingSpeed;
 
     void Start()
     {
         characterCtrlr = GetComponent<CharacterController>();
-        rig = GetComponent<XRRig>();
+        xrRig = GetComponent<XRRig>();
     }
 
     void FixedUpdate()
@@ -36,7 +36,7 @@ public class ContinuousMovement : MonoBehaviour
     /// </summary>
     private void Move()
     {
-        Quaternion headYaw = Quaternion.Euler(0, rig.cameraGameObject.transform.eulerAngles.y, 0);
+        Quaternion headYaw = Quaternion.Euler(0, xrRig.cameraTrans.eulerAngles.y, 0);
 
         Vector3 direction = headYaw * new Vector3(controller.thumbstickValue.x, 0, controller.thumbstickValue.y);
 
@@ -66,8 +66,8 @@ public class ContinuousMovement : MonoBehaviour
     /// </summary>
     private void CapsuleFollowHeadset()
     {
-        characterCtrlr.height = rig.cameraHeightInRigSpace + additionalHeight;
-        characterCtrlr.center = new Vector3(rig.cameraPosInRigSpace.x, characterCtrlr.height / 2 + characterCtrlr.skinWidth, rig.cameraPosInRigSpace.z);
+        characterCtrlr.height = xrRig.cameraHeightInRigSpace + additionalHeight;
+        characterCtrlr.center = new Vector3(xrRig.cameraPosInRigSpace.x, characterCtrlr.height / 2 + characterCtrlr.skinWidth, xrRig.cameraPosInRigSpace.z);
     }
 
     private bool CheckIfGrounded()
