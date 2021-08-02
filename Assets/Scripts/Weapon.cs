@@ -252,5 +252,9 @@ public class Weapon : MonoBehaviour
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawSphere(spawnAttachTransform.position, 0.025f);
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(rightAttachTransform.position, 0.025f);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawSphere(leftAttachTransform.position, 0.025f);
     }
 }

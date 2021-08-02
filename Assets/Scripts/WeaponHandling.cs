@@ -17,6 +17,7 @@ public class WeaponHandling : MonoBehaviour
     [Header("Loose Grip Options")]
     [SerializeField] private float looseGripSlipSpeed;
     [Range(0.01f, 1)] [SerializeField] private float looseGripTwoHandedMultiplier;
+    [SerializeField] private float looseGripGravityForceAccelSpeed;
     [Header("Movement Options")]
     [SerializeField] private float positionSpeed;
     [Range(0.01f, 1)] [SerializeField] private float minPositionSpeedDamper;
@@ -36,7 +37,8 @@ public class WeaponHandling : MonoBehaviour
     [Range(0.01f, 1)] [SerializeField] private float positionSpeedDamper;
     [Range(0.01f, 1)] [SerializeField] private float rotationSpeedDamper;
     [SerializeField] private Vector3 looseGripGravityForce;
-    
+    [SerializeField] private float looseGripGravityForceMultiplier;
+
     [Header("Statics")]
     public Weapon weapon;
     [SerializeField] private XRController leftController;
@@ -67,6 +69,8 @@ public class WeaponHandling : MonoBehaviour
     private bool weaponIsFacingThumb;
     private bool secondHandGrippingAboveFirst;
     private Vector3 weaponRotationUp;
+    private bool lastWeaponDotWorldUpIsUp;
+    private bool isWeaponDotWorldUpChangingDirection;
 
     private void Start()
     {
@@ -77,6 +81,9 @@ public class WeaponHandling : MonoBehaviour
         looseGripGravityForce = Vector3.zero;
         rb = weapon.GetComponent<Rigidbody>();
         rb.maxAngularVelocity = 30;
+        looseGripGravityForceMultiplier = 0;
+        lastWeaponDotWorldUpIsUp = Vector3.Dot(weapon.transform.forward, Vector3.up) > 0;
+        isWeaponDotWorldUpChangingDirection = Vector3.Dot(weapon.transform.forward, Vector3.up) > 0 != lastWeaponDotWorldUpIsUp;
 
         UpdateDominantHand();
 
@@ -264,12 +271,16 @@ public class WeaponHandling : MonoBehaviour
                 MoveGripPosition(rightHand.grabPointTransform, weapon.rightAttachTransform, false);
                 // No loose grip gravity when one hand has a grip still
                 looseGripGravityForce = Vector3.zero;
+                looseGripGravityForceMultiplier = 0;
+                weaponRotationUp = leftHand.grabPointTransform.up;
             }
             else if (leftController.isTriggerActivated && !rightController.isTriggerActivated)
             {
                 MoveGripPosition(leftHand.grabPointTransform, weapon.leftAttachTransform, false);
                 // No loose grip gravity when one hand has a grip still
                 looseGripGravityForce = Vector3.zero;
+                looseGripGravityForceMultiplier = 0;
+                weaponRotationUp = rightHand.grabPointTransform.up;
             }
             else if (rightController.isTriggerActivated && leftController.isTriggerActivated)
             {
@@ -283,26 +294,45 @@ public class WeaponHandling : MonoBehaviour
 
                 MoveGripPosition(rightHand.grabPointTransform, weapon.rightAttachTransform, applyFriction, false);
                 MoveGripPosition(leftHand.grabPointTransform, weapon.leftAttachTransform, applyFriction, false);
+
+                weaponRotationUp = (rightHand.grabPointTransform.up + leftHand.grabPointTransform.up).normalized;
             }
-            else if (looseGripGravityForce != Vector3.zero) // No repositioning, no loose grip gravity, as both hands are gripping
+            else // No repositioning, no loose grip gravity, as both hands are gripping
             {
                 looseGripGravityForce = Vector3.zero;
+                looseGripGravityForceMultiplier = 0;
+                weaponRotationUp = (rightHand.grabPointTransform.up + leftHand.grabPointTransform.up).normalized;
             }
         }
         else if (gripState == GripStates.RIGHTHANDED && rightController.isTriggerActivated)
         {
             SimulateLooseGripGravity();
             MoveGripPosition(rightHand.grabPointTransform, weapon.rightAttachTransform, true, true);
+            weaponRotationUp = rightHand.grabPointTransform.up;
         }
         else if (gripState == GripStates.LEFTHANDED && leftController.isTriggerActivated)
         {
             SimulateLooseGripGravity();
             MoveGripPosition(leftHand.grabPointTransform, weapon.leftAttachTransform, true, true);
+            weaponRotationUp = leftHand.grabPointTransform.up;
         }
         else // No repositioning, empty grip, so no loose grip gravity
         {
             looseGripGravityForce = Vector3.zero;
-            weaponRotationUp = (rightHand.handVisual.transform.up + leftHand.handVisual.transform.up).normalized;
+            looseGripGravityForceMultiplier = 0;
+
+            if (gripState == GripStates.TWOHANDED)
+            {
+                weaponRotationUp = (rightHand.grabPointTransform.up + leftHand.grabPointTransform.up).normalized;
+            }
+            else if (gripState == GripStates.RIGHTHANDED)
+            {
+                weaponRotationUp = rightHand.grabPointTransform.up;
+            }
+            else if (gripState == GripStates.LEFTHANDED)
+            {
+                weaponRotationUp = leftHand.grabPointTransform.up;
+            }
         }
     }
 
@@ -382,7 +412,16 @@ public class WeaponHandling : MonoBehaviour
 
     private void SimulateLooseGripGravity()
     {
-        looseGripGravityForce = -weapon.transform.forward * Vector3.Dot(weapon.transform.forward, Vector3.up) * looseGripSlipSpeed * Time.deltaTime;
+        isWeaponDotWorldUpChangingDirection = Vector3.Dot(weapon.transform.forward, Vector3.up) > 0 != lastWeaponDotWorldUpIsUp;
+        if (isWeaponDotWorldUpChangingDirection)
+            looseGripGravityForceMultiplier = 0;
+
+        looseGripGravityForceMultiplier += Vector3.Dot(weapon.transform.forward, Vector3.up) * looseGripGravityForceAccelSpeed * Time.deltaTime;
+        looseGripGravityForceMultiplier = Mathf.Clamp(looseGripGravityForceMultiplier, -1, 1);
+
+        looseGripGravityForce = -weapon.transform.forward * Vector3.Dot(weapon.transform.forward, Vector3.up) * looseGripSlipSpeed * Mathf.Abs(looseGripGravityForceMultiplier) * Time.deltaTime;
+
+        lastWeaponDotWorldUpIsUp = Vector3.Dot(weapon.transform.forward, Vector3.up) > 0;
 
         // Half speed if both hands are hald gripping
         if (gripState == GripStates.TWOHANDED)
@@ -462,11 +501,11 @@ public class WeaponHandling : MonoBehaviour
         // Rotation
         if (weaponIsFacingThumb)
         {
-            weaponTargetRot = Quaternion.LookRotation(grippingHand.grabPointTransform.forward, grippingHand.grabPointTransform.up);
+            weaponTargetRot = Quaternion.LookRotation(grippingHand.grabPointTransform.forward, weaponRotationUp);
         }
         else
         {
-            weaponTargetRot = Quaternion.LookRotation(-grippingHand.grabPointTransform.forward, grippingHand.grabPointTransform.up);
+            weaponTargetRot = Quaternion.LookRotation(-grippingHand.grabPointTransform.forward, weaponRotationUp);
         }
 
         // Position
@@ -524,11 +563,11 @@ public class WeaponHandling : MonoBehaviour
         // Rotation
         if (secondHandGrippingAboveFirst)
         {
-            weaponTargetRot = Quaternion.LookRotation(handGripDirection, firstGrippingHand.grabPointTransform.up);
+            weaponTargetRot = Quaternion.LookRotation(handGripDirection, weaponRotationUp);
         }
         else
         {
-            weaponTargetRot = Quaternion.LookRotation(-handGripDirection, firstGrippingHand.grabPointTransform.up);
+            weaponTargetRot = Quaternion.LookRotation(-handGripDirection, weaponRotationUp);
         }
 
         // Postion
@@ -608,13 +647,6 @@ public class WeaponHandling : MonoBehaviour
             angleInDegrees -= 360;
 
         rb.angularVelocity = (0.9f * rotationSpeedDamper * Mathf.Deg2Rad * angleInDegrees / Time.deltaTime) * rotationAxis.normalized;
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(rightHand.grabPointTransform.position, grabRadius);
-        Gizmos.DrawWireSphere(leftHand.grabPointTransform.position, grabRadius);
     }
 
     private void UpdateVisualHands()
@@ -708,5 +740,12 @@ public class WeaponHandling : MonoBehaviour
             leftHand.ResetHandVisualModelLocalPosition();
             leftHand.handVisual.transform.localRotation = Quaternion.identity;
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(rightHand.grabPointTransform.position, grabRadius);
+        Gizmos.DrawWireSphere(leftHand.grabPointTransform.position, grabRadius);
     }
 }
