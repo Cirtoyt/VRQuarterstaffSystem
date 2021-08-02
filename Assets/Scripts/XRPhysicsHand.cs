@@ -7,8 +7,8 @@ public class XRPhysicsHand : MonoBehaviour
     [Header("Variables")]
     public XRController parentController;
     public Transform grabPointTransform;
-    [SerializeField] private float positionSpeed = 20;
-    [Range(0.01f,1)][SerializeField] private float rotationSpeedDamper = 100;
+    [SerializeField] private float positionSpeed = 2000;
+    [Range(0.01f,1)][SerializeField] private float rotationSpeedDamper;
     [Header("Statics")]
     public XRHandVisual handVisual;
     public Transform handVisualModel;
