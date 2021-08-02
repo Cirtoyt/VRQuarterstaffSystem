@@ -11,7 +11,7 @@ TagManager:
   - XRBody
   - Water
   - UI
-  - 
+  - No Collisions
   - Environment
   - Grabbable
   - XRHand

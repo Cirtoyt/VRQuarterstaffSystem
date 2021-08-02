@@ -16,6 +16,7 @@ public class XRController : MonoBehaviour
     public bool isTriggerActivated;
     [Range(0, 1)] public float triggerValue = 0;
     public Vector2 thumbstickValue;
+    public bool isSecondaryButtonPressed;
     [Header("Events")]
     public UnityEvent gripBeginEvent;
     public UnityEvent gripEndEvent;
@@ -27,6 +28,7 @@ public class XRController : MonoBehaviour
     [SerializeField] private InputActionProperty gripAction;
     [SerializeField] private InputActionProperty triggerAction;
     [SerializeField] private InputActionProperty thumbstickAction;
+    [SerializeField] private InputActionProperty secondaryButtonAction;
 
     private List<InputActionProperty> actionList = new List<InputActionProperty>();
 
@@ -37,12 +39,15 @@ public class XRController : MonoBehaviour
         actionList.Add(gripAction);
         actionList.Add(triggerAction);
         actionList.Add(thumbstickAction);
+        actionList.Add(secondaryButtonAction);
 
         positionAction.action.performed += OnPosition;
         rotationAction.action.performed += OnRotation;
         gripAction.action.performed += OnGrip;
         triggerAction.action.performed += OnTrigger;
         thumbstickAction.action.performed += OnThumbstick;
+        secondaryButtonAction.action.performed += OnSecondaryButtonPerformed;
+        secondaryButtonAction.action.canceled += OnSecondaryButtonCancelled;
     }
 
     private void OnPosition(InputAction.CallbackContext obj)
@@ -99,6 +104,16 @@ public class XRController : MonoBehaviour
         {
             thumbstickValue = Vector2.zero;
         }
+    }
+
+    private void OnSecondaryButtonPerformed(InputAction.CallbackContext obj)
+    {
+        isSecondaryButtonPressed = true;
+    }
+
+    private void OnSecondaryButtonCancelled(InputAction.CallbackContext obj)
+    {
+        isSecondaryButtonPressed = false;
     }
 
     private void OnEnable()
