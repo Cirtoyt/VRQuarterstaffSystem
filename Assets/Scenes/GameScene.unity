@@ -9074,7 +9074,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dominantHandType: 0
-  grabRadius: 0.0659
+  grabRadius: 0.0774
   grabbableLayer:
     serializedVersion: 2
     m_Bits: 1280
