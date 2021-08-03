@@ -1342,7 +1342,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &50719506
 Transform:
   m_ObjectHideFlags: 0
@@ -9082,18 +9082,18 @@ MonoBehaviour:
   looseGripTwoHandedMultiplier: 0.7
   looseGripGravityForceAccelSpeed: 6
   positionSpeed: 10000
-  minPositionSpeedDamper: 0.8
+  minPositionSpeedDamper: 0.9
   maxPositionSpeedDamper: 1
-  minRotationSpeedDamper: 0.156
+  minRotationSpeedDamper: 0.248
   maxRotationSpeedDamper: 0.503
-  oneHandedSpeedDamperMultiplier: 0.6
+  oneHandedSpeedDamperMultiplier: 0.674
   minGripDistanceStrengthMultiplier: 0.72
   handVisualMinEndCapDepth: 0.022
   handVisualPositionOffset: {x: -0.023, y: 0.023, z: 0}
   handVisualEulerRotationOffset: {x: 73, y: 0, z: 0}
   handVisualStaffEndEulerRotationOffset: {x: 70, y: -85, z: 0}
-  positionSpeedDamper: 0.91344285
-  rotationSpeedDamper: 0.35282338
+  positionSpeedDamper: 0.96458715
+  rotationSpeedDamper: 0.41269726
   looseGripGravityForce: {x: 0, y: 0, z: 0}
   looseGripGravityForceMultiplier: 0
   weapon: {fileID: 7324149667657232024}
@@ -36729,7 +36729,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1539552883}
   m_LocalRotation: {x: -0, y: -0.2737287, z: -0, w: 0.961807}
-  m_LocalPosition: {x: -0.035, y: 3.734, z: 5.428}
+  m_LocalPosition: {x: -0.785, y: 3.734, z: 4.963}
   m_LocalScale: {x: 0.09876194, y: 4.1808014, z: 0.32101}
   m_Children: []
   m_Father: {fileID: 65102850933844236}
@@ -49171,7 +49171,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1882210226
 Transform:
   m_ObjectHideFlags: 0
