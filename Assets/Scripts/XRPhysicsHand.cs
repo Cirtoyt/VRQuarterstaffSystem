@@ -40,6 +40,12 @@ public class XRPhysicsHand : MonoBehaviour
             Quaternion rotDifference = parentController.transform.rotation * Quaternion.Inverse(transform.rotation);
             rotDifference.ToAngleAxis(out float angleInDegrees, out Vector3 rotationAxis);
 
+            if (float.IsInfinity(rotationAxis.x))
+                return;
+
+            if (angleInDegrees > 180)
+                angleInDegrees -= 360;
+
             rb.angularVelocity = (0.9f * rotationSpeedDamper * Mathf.Deg2Rad * angleInDegrees / Time.deltaTime) * rotationAxis.normalized;
         }
     }

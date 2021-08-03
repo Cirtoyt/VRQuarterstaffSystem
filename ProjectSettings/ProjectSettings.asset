@@ -131,7 +131,8 @@ PlayerSettings:
   preloadedAssets:
   - {fileID: 11400000, guid: 4a863bfbca0dd224090e884b709e93c1, type: 2}
   - {fileID: 11400000, guid: 1ecd47c221132c24fb52f61bc6500404, type: 2}
-  - {fileID: 2756547736081669478, guid: 96e9bd043dfa89b4081df809bab2197d, type: 2}
+  - {fileID: 4262534472364553091, guid: 96e9bd043dfa89b4081df809bab2197d, type: 2}
+  - {fileID: 2333819744219281863, guid: c02c5718d9d907d4cafeb2102d98e84c, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -150,7 +151,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
     Android: com.CirtoytsReality.VRQuarterstaffCombatDemoGame
-    Standalone: com.DefaultCompany.VRQuarterstaffGame-Week9
+    Standalone: com.CirtoytsReality.VRQuarterstaffCombatDemoGame
   buildNumber:
     Standalone: 0
     iPhone: 0
