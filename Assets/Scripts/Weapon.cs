@@ -60,7 +60,7 @@ public class Weapon : MonoBehaviour
         }
         foreach (MeshRenderer meshRenderer in meshesRenderers)
         {
-            if (meshRenderer.name == "Core Mesh" || meshRenderer.name == "90 Degree Handle")
+            if (meshRenderer.name == "Core Mesh" || meshRenderer.name == "Wood Stump" || meshRenderer.name == "Inner Extrusion")
                 meshRenderer.material = staffTransMat;
             else if (meshRenderer.name == "North Tip Mesh")
                 meshRenderer.material = northTipTransMat;
@@ -147,7 +147,7 @@ public class Weapon : MonoBehaviour
                 }
                 foreach (MeshRenderer meshRenderer in meshesRenderers)
                 {
-                    if (meshRenderer.name == "Core Mesh" || meshRenderer.name == "90 Degree Handle")
+                    if (meshRenderer.name == "Core Mesh" || meshRenderer.name == "Wood Stump" || meshRenderer.name == "Inner Extrusion")
                         meshRenderer.material = staffMat;
                     else if (meshRenderer.name == "North Tip Mesh")
                         meshRenderer.material = northTipMat;
@@ -203,7 +203,7 @@ public class Weapon : MonoBehaviour
     {
         foreach (MeshRenderer meshRenderer in meshesRenderers)
         {
-            if (meshRenderer.name == "Core Mesh" || meshRenderer.name == "90 Degree Handle")
+            if (meshRenderer.name == "Core Mesh" || meshRenderer.name == "Wood Stump" || meshRenderer.name == "Inner Extrusion")
                 meshRenderer.material = staffTransMat;
             else if (meshRenderer.name == "North Tip Mesh")
                 meshRenderer.material = northTipTransMat;
